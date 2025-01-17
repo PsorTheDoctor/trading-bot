@@ -2,21 +2,22 @@ import MetaTrader5 as mt5
 import pandas as pd
 import datetime as dt
 import time
-import copy
 from technical_indicators import *
 
 pairs = ['EURUSD', 'GBPUSD', 'USDCHF', 'AUDUSD', 'USDCAD']
 pos_size = 0.5  # max capital allocated for any currency pair
-interval = 300  # 5-minute interval in seconds
+interval = 60  # 1-minute interval in seconds
 
 
 def get_positions():
     positions = mt5.positions_get()
 
     if len(positions) > 0:
-        df = pd.DataFrame(positions, columns=positions[0]._asdict().keys())
+        df = pd.DataFrame(list(positions), columns=positions[0]._asdict().keys())
         df.time = pd.to_datetime(df.time, unit='s')
-        df.drop(['time_msc', 'time_update', 'time_update_msc'], axis=1, inplace=True)
+        df.drop(['time_msc', 'time_update', 'time_update_msc', 'external_id'], axis=1, inplace=True)
+        # To distinguish between long and short positions
+        df.type = np.where(df.type == 0, 1, -1)
     else:
         df = pd.DataFrame()
 
@@ -40,22 +41,23 @@ def get_5m_candles(currency, lookback=10, bars=250):
         currency, mt5.TIMEFRAME_M5, dt.datetime.now() - dt.timedelta(lookback), bars
     )
     df = pd.DataFrame(data)
-    df.time = pd.to_datatime(df.time, unit='s')
+    df.time = pd.to_datetime(df.time, unit='s')
     df.set_index('time', inplace=True)
-    df.columns = df.columns.str.title()
+    df.rename(columns={col: col.lower() for col in df.columns}, inplace=True)
     return df
 
 
 def trade_signal(merged_df, long_short):
     signal = ''
     df = copy.deepcopy(merged_df)
+
     if long_short == '':
         if df['bar_num'].tolist()[-1] >= 2 and df['macd'].tolist()[-1] > df['macd_sig'].tolist()[-1]:
             signal = 'buy'
-        elif df['bar_num'].tolist()[-1] <= 2 and df['macd'].tolist()[-1] < df['macd_sig'].tolist()[-1]:
+        elif df['bar_num'].tolist()[-1] <= -2 and df['macd'].tolist()[-1] < df['macd_sig'].tolist()[-1]:
             signal = 'sell'
     elif long_short == 'long':
-        if df['bar_num'].tolist()[-1] <= 2 and df['macd'].tolist()[-1] < df['macd_sig'].tolist()[-1]:
+        if df['bar_num'].tolist()[-1] <= -2 and df['macd'].tolist()[-1] < df['macd_sig'].tolist()[-1]:
             signal = 'close_sell'
         elif df['macd'].tolist()[-1] < df['macd_sig'].tolist()[-1] and df['macd'].tolist()[-2] > df['macd_sig'].tolist()[-2]:
             signal = 'close'
@@ -71,14 +73,16 @@ def trade_signal(merged_df, long_short):
 def market_order(symbol, vol, buy_sell):
     if buy_sell.lower()[0] == 'b':
         direction = mt5.ORDER_TYPE_BUY
+        price = mt5.symbol_info_tick(symbol).ask
     else:
         direction = mt5.ORDER_TYPE_SELL
+        price = mt5.symbol_info_tick(symbol).bid
 
     request = {
         'action': mt5.TRADE_ACTION_DEAL,
         'symbol': symbol,
         'volume': vol,
-        'price': mt5.symbol_info_tick(symbol).ask,
+        'price': price,
         'type': direction,
         'type_time': mt5.ORDER_TIME_GTC,
         'type_filling': mt5.ORDER_FILLING_RETURN
@@ -95,7 +99,7 @@ def limit_order(symbol, vol, buy_sell, pips_away):
         price = mt5.symbol_info_tick(symbol).ask + pips_away * pip_unit
     else:
         direction = mt5.ORDER_TYPE_SELL
-        price = mt5.symbol_info_tick(symbol).ask - pips_away * pip_unit
+        price = mt5.symbol_info_tick(symbol).bid - pips_away * pip_unit
 
     request = {
         'action': mt5.TRADE_ACTION_PENDING,
@@ -162,7 +166,7 @@ if __name__ == '__main__':
     timeout = time.time() + 3600
     while time.time() <= timeout:
         try:
-            print('Passthrough at ', time.strftime(
+            print('Passthrough at', time.strftime(
                 '%Y-%m-%d %H:%M:%S', time.localtime(time.time())
             ))
             main()

@@ -1,5 +1,7 @@
 import pandas as pd
+import yfinance as yf
 from alpha_vantage.timeseries import TimeSeries
+import datetime as dt
 import copy
 from technical_indicators import *
 from performance_indicators import *
@@ -10,7 +12,7 @@ key = open(r'D:\alpha_vantage_key.txt', 'r').read()
 ts = TimeSeries(key=key, output_format='pandas')
 
 
-def fetch_data(tickers):
+def fetch_data(tickers, provider):
     attempt = 0
     drop = []  # list to store tickers where close price was extracted
 
@@ -18,10 +20,17 @@ def fetch_data(tickers):
         tickers = [j for j in tickers if j not in drop]
         for i in range(len(tickers)):
             try:
-                ohlc[tickers[i]] = ts.get_intraday(
-                    symbol=tickers[i], interval='5min', outputsize='full', extended_hours=True
-                )[0]
-                #ohlc[tickers[i]].columns = ['open', 'high', 'low', 'adj close', 'volume']
+                if provider == 'yahoo':
+                    start = dt.datetime.today() - dt.timedelta(3650)
+                    end = dt.datetime.today()
+                    ohlc[tickers[i]] = yf.download(tickers[i], start, end, interval='1mo')
+                elif provider == 'alpha_vantage':
+                    ohlc[tickers[i]] = ts.get_intraday(
+                        symbol=tickers[i], interval='5min', outputsize='full', extended_hours=True
+                    )[0]
+                else:
+                    print('Wrong provider')
+                ohlc[tickers[i]].columns = ['open', 'high', 'low', 'adj close', 'volume']
                 drop.append(tickers[i])
             except:
                 print(f'Failed to fetch {tickers[i]} data')
@@ -33,7 +42,7 @@ def fetch_data(tickers):
 """
 Backtesting
 """
-ohlc = fetch_data(tickers)
+ohlc = fetch_data(tickers, provider='yahoo')
 tickers = ohlc.keys()
 ohlc_renko = {}
 df = copy.deepcopy(ohlc)
