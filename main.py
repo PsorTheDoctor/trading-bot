@@ -7,7 +7,7 @@ from technical_indicators import *
 
 pairs = ['EURUSD', 'GBPUSD', 'USDCHF', 'AUDUSD', 'USDCAD']
 pos_size = 0.5  # max capital allocated for any currency pair
-interval = 300  # 5-minute interval in seconds
+interval = 60  # 1-minute interval in seconds
 
 
 def get_positions():
@@ -40,7 +40,7 @@ def get_5m_candles(currency, lookback=10, bars=250):
         currency, mt5.TIMEFRAME_M5, dt.datetime.now() - dt.timedelta(lookback), bars
     )
     df = pd.DataFrame(data)
-    df.time = pd.to_datatime(df.time, unit='s')
+    df.time = pd.to_datetime(df.time, unit='s')
     df.set_index('time', inplace=True)
     df.columns = df.columns.str.title()
     return df
@@ -152,7 +152,7 @@ def main():
 
 
 if __name__ == '__main__':
-    key = open('D:\meta_trader_key.txt', 'r').read().split()
+    key = open('meta_trader_key.txt', 'r').read().split()
     path = r'C:\Program Files\MetaTrader 5\terminal64.exe'
 
     if mt5.initialize(path=path, login=int(key[0]), password=key[1], server=key[2]):
