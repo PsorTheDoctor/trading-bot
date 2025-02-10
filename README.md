@@ -1,5 +1,5 @@
 # Prerequirements
-1. (Note: It's higly recommended to create and use Python virtual environment beforehand: https://realpython.com/python-virtual-environments-a-primer/)
+1. (Note: It's highly recommended to create and use Python virtual environment beforehand: https://realpython.com/python-virtual-environments-a-primer/)
 Install dependencies with command:
 ```
 pip install -r requirements.txt
