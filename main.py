@@ -1,7 +1,5 @@
 import MetaTrader5 as mt5
 import time
-from strategies.portfolio_rebalance import portfolio_rebalance
-from strategies.obv_renko import obv_renko
 from strategies.macd_renko import macd_renko
 
 
