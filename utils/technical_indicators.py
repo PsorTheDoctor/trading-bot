@@ -79,3 +79,16 @@ def renko_merge(df):
     merged_df['macd'] = macd(merged_df, 12, 26, 9)[0]
     merged_df['macd_sig'] = macd(merged_df, 12, 26, 9)[1]
     return merged_df
+
+
+def obv(df):
+    """
+    On Balance Volume
+    """
+    df = df.copy()
+    df['daily_ret'] = df['adj close'].pct_change()
+    df['direction'] = np.where(df['daily_ret'] >= 0, 1, -1)
+    df['direction'][0] = 0
+    df['vol_adj'] = df['volume'] = df['direction']
+    df['obv'] = df['vol_adj'].cumsum()
+    return df['obv']

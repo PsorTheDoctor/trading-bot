@@ -3,7 +3,7 @@ import numpy as np
 
 def cagr(df):
     """
-    Cummulative Annual Growth Rate
+    Cumulative Annual Growth Rate
     """
     df = df.copy()
     df['cum_return'] = (1 + df['ret']).cumprod()

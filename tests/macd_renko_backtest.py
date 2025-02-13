@@ -2,9 +2,8 @@ import pandas as pd
 import yfinance as yf
 from alpha_vantage.timeseries import TimeSeries
 import datetime as dt
-import copy
-from technical_indicators import *
-from performance_indicators import *
+from utils.technical_indicators import *
+from utils.performance_indicators import *
 
 tickers = ['MSFT', 'AAPL', 'AMZN']
 ohlc = {}  # dict with ohlc value for each stock
