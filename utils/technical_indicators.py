@@ -74,7 +74,12 @@ def renko_merge(df):
     df['date'] = df.index
     renko_df = renko(df)
     renko_df.columns = ['date', 'open', 'high', 'low', 'close', 'uptrend', 'bar_num']
-    merged_df = df.merge(renko_df.loc[:, ['date', 'bar_num']], how='outer', on='date')
+    
+    renko_df_to_merge = renko_df.loc[:, ['date', 'bar_num']]
+    df.date.astype('datetime64[ns]', copy=False)
+    renko_df_to_merge.date = renko_df_to_merge.date.astype('datetime64[ns]')
+    
+    merged_df = df.merge(renko_df_to_merge, how='outer', on='date')
     merged_df['bar_num'].fillna(method='ffill', inplace=True)
     merged_df['macd'] = macd(merged_df, 12, 26, 9)[0]
     merged_df['macd_sig'] = macd(merged_df, 12, 26, 9)[1]
