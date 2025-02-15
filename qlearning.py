@@ -1,7 +1,11 @@
+import traceback
 import numpy as np
 import random
-import yfinance as yf
 import pandas as pd
+import MetaTrader5 as mt5
+import datetime as dt
+
+from utils.data_loaders import get_positions,get_5m_candles, get_positions_historical
 
 class QLearningTrader:
     def __init__(self, actions, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
@@ -83,25 +87,53 @@ class QLearningTrader:
             total_profit += reward
         return total_profit
 
+# ToDo:  extract values from 'close' column and use them for training
+def main():
+    key = open('meta_trader_key.txt', 'r').read().split()
+    path = r'C:\Program Files\MetaTrader 5\terminal64.exe'
 
-# Fetch historical Forex data (EUR/USD) from Yahoo Finance
-# We use 'EURUSD=X' for the EUR/USD currency pair
-data = yf.download('EURUSD=X', start='2020-01-01', end='2021-01-01')['Close'].values
+    if mt5.initialize(path=path, login=int(key[0]), password=key[1], server=key[2]):
+        print('Connected')
+    
+    try:
+        actions = ['Buy', 'Sell', 'Hold']
+        
+        historical_date = dt.datetime(2025, 2, 12)
+        symbols = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY', 'USDCNH']
+        
+        for symbol in symbols:
+            agent = QLearningTrader(actions)
+            
+            print(f"current symbol: {symbol}")
+            open_pos = get_positions_historical('EURUSD', historical_date, 200)
+            print(f"open_pos head: {open_pos.head()}")
+            
+            agent.train(data)
+    except Exception as e:
+        print(f"Unexpected error while trying to perform q-learning algorithm: {e}")
+        print(traceback.format_exc())
 
-# Display the first few data points
-print("Forex Data (EUR/USD) - Close Prices:\n", data[:10])
+main()
 
-# Define possible actions: Buy, Sell, Hold
-actions = ['Buy', 'Sell', 'Hold']
+# # Fetch historical Forex data (EUR/USD) from Yahoo Finance
+# # We use 'EURUSD=X' for the EUR/USD currency pair
 
-# Initialize the Q-learning agent
-agent = QLearningTrader(actions)
+# # data = yf.download('EURUSD=X', start='2020-01-01', end='2021-01-01')['Close'].values
 
-# Train the agent with the Forex data
-print("Training the model...")
-agent.train(data)
+# # Display the first few data points
+# print("Forex Data (EUR/USD) - Close Prices:\n", data[:10])
 
-# After training, test the model to calculate the profit/loss
-print("Testing the trained model...")
-profit = agent.test(data)
-print(f'Total profit from testing: {profit}')
+# # Define possible actions: Buy, Sell, Hold
+# actions = ['Buy', 'Sell', 'Hold']
+
+# # Initialize the Q-learning agent
+# agent = QLearningTrader(actions)
+
+# # Train the agent with the Forex data
+# print("Training the model...")
+# agent.train(data)
+
+# # After training, test the model to calculate the profit/loss
+# print("Testing the trained model...")
+# profit = agent.test(data)
+# print(f'Total profit from testing: {profit}')
