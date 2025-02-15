@@ -1,3 +1,4 @@
+import traceback
 import MetaTrader5 as mt5
 import pandas as pd
 import datetime as dt
@@ -70,4 +71,6 @@ def macd_renko():
                 print(f'New short position initiated for {currency}')
 
     except Exception as e:
+        print("Exception")
+        print(traceback.format_exc())
         print(e)
