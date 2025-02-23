@@ -54,8 +54,11 @@ class QLearningTrader:
             reward = 0  # No reward for holding
         return reward
 
+    def extract_data_from_positions(self, pos: pd.DataFrame):
+        return pos['price_current'].values
+
     def train(self, pos: pd.DataFrame) -> None:
-        data = pos['price_current'].values
+        data = self.extract_data_from_positions(pos)
         
         # Find min and max prices for normalization
         min_price = np.min(data)
@@ -75,7 +78,9 @@ class QLearningTrader:
             # Update Q-table
             self.update_q_table(current_price, action, reward, next_price, min_price, max_price)
 
-    def test(self, data):
+    def test(self, pos: pd.DataFrame):
+        data = self.extract_data_from_positions(pos)
+        
         # Find min and max prices for normalization
         min_price = np.min(data)
         max_price = np.max(data)
@@ -94,7 +99,7 @@ class QLearningTrader:
 def main():
     key = open('meta_trader_key.txt', 'r').read().split()
     path = r'C:\Program Files\MetaTrader 5\terminal64.exe'
-    data = yf.download('EURUSD=X', start='2020-01-01', end='2021-01-01')['Close'].values
+    # data = yf.download('EURUSD=X', start='2020-01-01', end='2021-01-01')['Close'].values
 
     if mt5.initialize(path=path, login=int(key[0]), password=key[1], server=key[2]):
         print('Connected')
@@ -102,21 +107,21 @@ def main():
     try:
         actions = ['Buy', 'Sell', 'Hold']
         
-        # historical_date = dt.datetime(2025, 2, 12)
         symbols = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY', 'USDCNH']
         
         # results_per_symbol = {}
         
-        for symbol in symbols:
-            agent = QLearningTrader(actions)
+        agent = QLearningTrader(actions)
             
-            print(f"current symbol: {symbol}")
-            # open_pos = get_positions_historical('EURUSD', historical_date, 200)
-            open_pos = get_positions()
-            print(f"open_pos head: {open_pos.head()}")
-            # print(f"open pos curr: {open_pos_curr.head()}")
+        open_pos = get_positions()
+        print(f"open_pos head: {open_pos.head()}")
             
-            agent.train(open_pos)
+        agent.train(open_pos)
+        
+        print("Testing the trained model...")
+        profit = agent.test(open_pos)
+        print(f'Total profit from testing: {profit}')
+            
     except Exception as e:
         print(f"Unexpected error while trying to perform q-learning algorithm: {e}")
         print(traceback.format_exc())
