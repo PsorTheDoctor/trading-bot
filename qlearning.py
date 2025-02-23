@@ -95,15 +95,7 @@ class QLearningTrader:
             total_profit += reward
         return total_profit
 
-# ToDo:  extract values from 'close' column and use them for training
-def main():
-    key = open('meta_trader_key.txt', 'r').read().split()
-    path = r'C:\Program Files\MetaTrader 5\terminal64.exe'
-    # data = yf.download('EURUSD=X', start='2020-01-01', end='2021-01-01')['Close'].values
-
-    if mt5.initialize(path=path, login=int(key[0]), password=key[1], server=key[2]):
-        print('Connected')
-    
+def qlearning():    
     try:
         actions = ['Buy', 'Sell', 'Hold']
         
@@ -125,8 +117,6 @@ def main():
     except Exception as e:
         print(f"Unexpected error while trying to perform q-learning algorithm: {e}")
         print(traceback.format_exc())
-
-main()
 
 # # Fetch historical Forex data (EUR/USD) from Yahoo Finance
 # # We use 'EURUSD=X' for the EUR/USD currency pair

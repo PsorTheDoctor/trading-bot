@@ -1,9 +1,21 @@
 import MetaTrader5 as mt5
 import time
+import sys
 from strategies.macd_renko import macd_renko
+from qlearning import qlearning
 
+ALGORITHMS = {
+    'renko': macd_renko,
+    'qlearning': qlearning
+}
+DEFAULT_ALGORITHM_NAME = 'renko'
 
 if __name__ == '__main__':
+    algorithm_name = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_ALGORITHM_NAME
+    algorithm = ALGORITHMS.get(algorithm_name)
+    if not algorithm:
+        raise Exception(f"Unsupported algorithm: {algorithm_name}")
+    
     interval = 60  # 1-minute interval in seconds
 
     key = open('meta_trader_key.txt', 'r').read().split()
@@ -19,7 +31,7 @@ if __name__ == '__main__':
             print('Passthrough at', time.strftime(
                 '%Y-%m-%d %H:%M:%S', time.localtime(time.time())
             ))
-            macd_renko()
+            algorithm()
             time.sleep(interval - ((time.time() - start) % interval))
         except KeyboardInterrupt:
             print('\nExiting')
