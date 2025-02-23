@@ -56,13 +56,20 @@ class QLearningTrader:
 
     def extract_data_from_positions(self, pos: pd.DataFrame):
         return pos['price_current'].values
+    
+    def get_min_and_max_price_from_data(self, data: np.ndarray) -> tuple[float, float]:
+        min_price = np.min(data)
+        max_price = np.max(data)
+        
+        return (min_price, max_price)
 
     def train(self, pos: pd.DataFrame) -> None:
         data = self.extract_data_from_positions(pos)
         
         # Find min and max prices for normalization
-        min_price = np.min(data)
-        max_price = np.max(data)
+        min_price, max_price = self.get_min_and_max_price_from_data(data)
+        
+        print(f"min price: {min_price}")
 
         # Training on Forex data
         for i in range(1, len(data)):
@@ -82,8 +89,7 @@ class QLearningTrader:
         data = self.extract_data_from_positions(pos)
         
         # Find min and max prices for normalization
-        min_price = np.min(data)
-        max_price = np.max(data)
+        min_price, max_price = self.get_min_and_max_price_from_data(data)
 
         # Test the trained model with new data
         total_profit = 0
