@@ -4,6 +4,7 @@ import random
 import pandas as pd
 import MetaTrader5 as mt5
 import datetime as dt
+import yfinance as yf
 
 from utils.data_loaders import get_positions,get_5m_candles, get_positions_historical
 
@@ -53,7 +54,9 @@ class QLearningTrader:
             reward = 0  # No reward for holding
         return reward
 
-    def train(self, data):
+    def train(self, pos: pd.DataFrame) -> None:
+        data = pos['price_current'].values
+        
         # Find min and max prices for normalization
         min_price = np.min(data)
         max_price = np.max(data)
@@ -91,6 +94,7 @@ class QLearningTrader:
 def main():
     key = open('meta_trader_key.txt', 'r').read().split()
     path = r'C:\Program Files\MetaTrader 5\terminal64.exe'
+    data = yf.download('EURUSD=X', start='2020-01-01', end='2021-01-01')['Close'].values
 
     if mt5.initialize(path=path, login=int(key[0]), password=key[1], server=key[2]):
         print('Connected')
@@ -98,17 +102,21 @@ def main():
     try:
         actions = ['Buy', 'Sell', 'Hold']
         
-        historical_date = dt.datetime(2025, 2, 12)
+        # historical_date = dt.datetime(2025, 2, 12)
         symbols = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY', 'USDCNH']
+        
+        # results_per_symbol = {}
         
         for symbol in symbols:
             agent = QLearningTrader(actions)
             
             print(f"current symbol: {symbol}")
-            open_pos = get_positions_historical('EURUSD', historical_date, 200)
+            # open_pos = get_positions_historical('EURUSD', historical_date, 200)
+            open_pos = get_positions()
             print(f"open_pos head: {open_pos.head()}")
+            # print(f"open pos curr: {open_pos_curr.head()}")
             
-            agent.train(data)
+            agent.train(open_pos)
     except Exception as e:
         print(f"Unexpected error while trying to perform q-learning algorithm: {e}")
         print(traceback.format_exc())
