@@ -126,9 +126,21 @@ class QLearningTrader:
             if action == 'buy' or action == 'sell':
                 order_status = market_order(currency, pos_size, action)
                 print(f"order status: {order_status}")
-        
+
 def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:
     return all_positions.loc[all_positions[CURRENCY_COLUMN_NAME] == currency]
+
+def run_algorithm_for_currency(currency: str, positions_for_currency: pd.DataFrame) -> None:
+    # We want to create new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
+    agent = QLearningTrader()
+            
+    agent.train(positions_for_currency)
+        
+    print(f"Testing the trained model for currency={currency} ...")
+    profit = agent.test(positions_for_currency)
+    print(f'Total profit from testing:{profit} for currency={currency}')
+            
+    agent.perform_trading(positions_for_currency, currency)
 
 def qlearning():    
     try:                    
@@ -137,17 +149,8 @@ def qlearning():
             
         for currency in pairs:
             positions_for_currency = get_positions_for_currency(open_pos, currency)
+            run_algorithm_for_currency(currency, positions_for_currency)
             
-            # We want to create new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
-            agent = QLearningTrader()
-            
-            agent.train(positions_for_currency)
-        
-            print(f"Testing the trained model for currency={currency} ...")
-            profit = agent.test(open_pos)
-            print(f'Total profit from testing:{profit} for currency={currency}')
-            
-            agent.perform_trading(positions_for_currency, currency)
             
     except Exception as e:
         print(f"Unexpected error while trying to perform q-learning algorithm: {e}")
