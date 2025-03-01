@@ -12,6 +12,8 @@ from utils.orders import market_order
 
 type ActionsType = Literal['buy', 'sell', 'hold']
 
+CURRENCY_COLUMN_NAME = 'symbol'
+pairs = ['EURUSD', 'GBPUSD', 'USDCHF', 'AUDUSD', 'USDCAD']
 pos_size = 0.5  # max capital allocated for any currency pair
 
 class QLearningTrader:
@@ -107,7 +109,7 @@ class QLearningTrader:
             total_profit += reward
         return total_profit
     
-    def perform_trading(self, pos: pd.DataFrame):
+    def perform_trading(self, pos: pd.DataFrame, currency: str):
         data = self.extract_data_from_positions(pos)
         
         # Find min and max prices for normalization
@@ -122,28 +124,30 @@ class QLearningTrader:
             print(f"action: {action}")
             
             if action == 'buy' or action == 'sell':
-                order_status = market_order('EURUSD', pos_size, action)
+                order_status = market_order(currency, pos_size, action)
                 print(f"order status: {order_status}")
         
+def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:
+    return all_positions.loc[all_positions[CURRENCY_COLUMN_NAME] == currency]
 
 def qlearning():    
-    try:
-        symbols = ['EURUSD', 'GBPUSD', 'USDCHF', 'USDJPY', 'USDCNH']
-        
-        # results_per_symbol = {}
-        
-        agent = QLearningTrader()
-            
+    try:                    
         open_pos = get_positions()
         print(f"open_pos head: {open_pos.head()}")
             
-        agent.train(open_pos)
+        for currency in pairs:
+            positions_for_currency = get_positions_for_currency(open_pos, currency)
+            
+            # We want to create new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
+            agent = QLearningTrader()
+            
+            agent.train(positions_for_currency)
         
-        print("Testing the trained model...")
-        profit = agent.test(open_pos)
-        print(f'Total profit from testing: {profit}')
-        
-        agent.perform_trading(open_pos)
+            print(f"Testing the trained model for currency={currency} ...")
+            profit = agent.test(open_pos)
+            print(f'Total profit from testing:{profit} for currency={currency}')
+            
+            agent.perform_trading(positions_for_currency, currency)
             
     except Exception as e:
         print(f"Unexpected error while trying to perform q-learning algorithm: {e}")
