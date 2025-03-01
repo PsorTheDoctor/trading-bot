@@ -9,12 +9,9 @@ import yfinance as yf
 
 from utils.data_loaders import get_positions,get_5m_candles, get_positions_historical
 from utils.orders import market_order
+from utils.constants import CURRENCY_COLUMN_NAME, CURRENCY_PAIRS, POSITION_SIZE
 
 type ActionsType = Literal['buy', 'sell', 'hold']
-
-CURRENCY_COLUMN_NAME = 'symbol'
-pairs = ['EURUSD', 'GBPUSD', 'USDCHF', 'AUDUSD', 'USDCAD']
-pos_size = 0.5  # max capital allocated for any currency pair
 
 class QLearningTrader:
     def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
@@ -124,7 +121,7 @@ class QLearningTrader:
             print(f"action: {action}")
             
             if action == 'buy' or action == 'sell':
-                order_status = market_order(currency, pos_size, action)
+                order_status = market_order(currency, POSITION_SIZE, action)
                 print(f"order status: {order_status}")
 
 def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:
@@ -147,7 +144,7 @@ def qlearning():
         open_pos = get_positions()
         print(f"open_pos head: {open_pos.head()}")
             
-        for currency in pairs:
+        for currency in CURRENCY_PAIRS:
             positions_for_currency = get_positions_for_currency(open_pos, currency)
             run_algorithm_for_currency(currency, positions_for_currency)
             

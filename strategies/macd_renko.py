@@ -5,10 +5,7 @@ import datetime as dt
 from utils.data_loaders import *
 from utils.orders import market_order
 from utils.technical_indicators import *
-
-pairs = ['EURUSD', 'GBPUSD', 'USDCHF', 'AUDUSD', 'USDCAD']
-pos_size = 0.5  # max capital allocated for any currency pair
-
+from utils.constants import CURRENCY_PAIRS, POSITION_SIZE
 
 def trade_signal(merged_df, long_short):
     signal = ''
@@ -36,7 +33,7 @@ def trade_signal(merged_df, long_short):
 def macd_renko():
     try:
         open_pos = get_positions()
-        for currency in pairs:
+        for currency in CURRENCY_PAIRS:
             long_short = ''
             if len(open_pos) > 0:
                 open_pos_cur = open_pos[open_pos['symbol'] == currency]
@@ -50,7 +47,7 @@ def macd_renko():
             signal = trade_signal(renko_merge(ohlc), long_short)
 
             if signal == 'buy' or signal == 'sell':
-                market_order(currency, pos_size, signal)
+                market_order(currency, POSITION_SIZE, signal)
                 print(f'New {signal} initiated for {currency}')
             elif signal == 'close':
                 total_pos = (open_pos_cur.type * open_pos_cur.volume).sum()
@@ -61,12 +58,12 @@ def macd_renko():
                 print(f'All positions closed for {currency}')
             elif signal == 'close_buy':
                 total_pos = (open_pos_cur.type * open_pos_cur.volume).sum()
-                market_order(currency, abs(total_pos) + pos_size, 'buy')
+                market_order(currency, abs(total_pos) + POSITION_SIZE, 'buy')
                 print(f'Existing short position closed for {currency}')
                 print(f'New long position initiated for {currency}')
             elif signal == 'close_sell':
                 total_pos = (open_pos_cur.type * open_pos_cur.volume).sum()
-                market_order(currency, total_pos + pos_size, 'sell')
+                market_order(currency, total_pos + POSITION_SIZE, 'sell')
                 print(f'Existing long position closed for {currency}')
                 print(f'New short position initiated for {currency}')
 
