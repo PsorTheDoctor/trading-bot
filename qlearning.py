@@ -60,7 +60,7 @@ class QLearningTrader:
         return reward
 
     def extract_data_from_positions(self, pos: pd.DataFrame) -> list[float]:
-        return pos['price_current'].values
+        return pos['close'].values
     
     def get_min_and_max_price_from_data(self, data: np.ndarray) -> tuple[float, float]:
         min_price = np.min(data)
@@ -70,6 +70,8 @@ class QLearningTrader:
 
     def train(self, pos: pd.DataFrame) -> None:
         data = self.extract_data_from_positions(pos)
+        
+        print(f"extracted train data: {data}")
         
         # Find min and max prices for normalization
         min_price, max_price = self.get_min_and_max_price_from_data(data)
@@ -145,8 +147,11 @@ def qlearning():
         print(f"open_pos head: {open_pos.head()}")
             
         for currency in CURRENCY_PAIRS:
-            positions_for_currency = get_positions_for_currency(open_pos, currency)
-            run_algorithm_for_currency(currency, positions_for_currency)
+            print(f"Running Q-learning for currency={currency}")
+            
+            data_for_currency = get_5m_candles(currency)
+            print(f"data for currency ({currency})={data_for_currency.head()}")
+            run_algorithm_for_currency(currency, data_for_currency)
             
             
     except Exception as e:
