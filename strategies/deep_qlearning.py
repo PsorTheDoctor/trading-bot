@@ -8,6 +8,7 @@ import MetaTrader5 as mt5
 import time
 
 from utils.constants import CURRENCY_PAIRS
+from utils.data_loaders import get_5m_candles
 
 LOT_SIZE = 0.1
 EPISODES = 1000
@@ -27,13 +28,20 @@ class ForexEnv:
         self.action_space = [0, 1, 2, 3]
     
     def _get_market_data(self):
-        # Get the latest tick data from MT5
-        tick = mt5.symbol_info_tick(self.symbol)
-        price = tick.last
-        # For demonstration, compute a simple moving average over 10 ticks (you could replace this with any indicator)
-        rates = mt5.copy_rates_from(self.symbol, mt5.TIMEFRAME_M1, time.time()-600, 10)
-        ma = np.mean(rates['close']) if rates is not None else price
-        return np.array([price, ma])
+        # # Get the latest tick data from MT5
+        # tick = mt5.symbol_info_tick(self.symbol)
+        # price = tick.last
+        # # For demonstration, compute a simple moving average over 10 ticks (you could replace this with any indicator)
+        # rates = mt5.copy_rates_from(self.symbol, mt5.TIMEFRAME_M1, time.time()-600, 10)
+        # ma = np.mean(rates['close']) if rates is not None else price
+        # return np.array([price, ma])
+        
+        data = get_5m_candles(self.symbol)
+        prices = data['close'].values
+        ma = np.mean(prices)
+        last_price = prices[-1]
+        
+        return np.array([last_price, ma])
     
     def reset(self):
         # Reset the environment and return the initial state
