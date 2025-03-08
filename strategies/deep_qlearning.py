@@ -55,6 +55,7 @@ class ForexEnv:
         # Get current market data
         state = self._get_market_data()
         price = state[0]
+        result = ''
         
         # Action execution:
         if action == 1:  # Buy
@@ -131,6 +132,8 @@ class ForexEnv:
             # Hold action; perhaps incur a small time penalty to encourage action
             reward = -0.01
 
+        print(f"order result={result}")
+
         # For a real application, you would compute reward based on P&L and risk metrics.
         # Also, define termination conditions (e.g., reaching a time limit or drawdown threshold).
         # Here we use a dummy condition.
@@ -191,14 +194,21 @@ class DQNAgent:
 def run_algorithm_for_currency(currency: str):    
     # Create environment and agent
     env = ForexEnv(currency, LOT_SIZE)
+    print(f"Enironment created={env}")
+    
     state_size = env.state_dim
     action_size = len(env.action_space)
     agent = DQNAgent(state_size, action_size)
+    print(f"Agent created={agent}")
 
     for e in range(EPISODES):
         state = env.reset()
+        print(f"State reseted={state}")
+        
         state = np.reshape(state, [1, state_size])
         for time_step in range(STEPS_PER_EPISODE):
+            print(f"running action")
+            
             action = agent.act(state)
             next_state, reward, done, _ = env.step(action)
             next_state = np.reshape(next_state, [1, state_size])
@@ -220,4 +230,5 @@ def run_algorithm_for_currency(currency: str):
 
 def deep_qlearning():
     for currency in CURRENCY_PAIRS:
+        print(f"Running deep-qlearning alogirthm for currency={currency}")
         run_algorithm_for_currency(currency)
