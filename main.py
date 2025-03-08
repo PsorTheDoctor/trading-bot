@@ -6,6 +6,8 @@ from strategies.macd_renko import macd_renko
 from strategies.qlearning import qlearning
 from strategies.deep_qlearning import deep_qlearning
 from strategies.sarsa import sarsa
+from strategies.double_qlearning import double_qlearning
+from strategies.expected_sarsa import expected_sarsa
 
 ALGORITHMS = {
     'renko': macd_renko,
