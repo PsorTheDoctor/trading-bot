@@ -11,10 +11,13 @@ from utils.constants import CURRENCY_PAIRS, CURRENCY_PAIRS, POSITION_SIZE
 ActionType = Literal['buy', 'sell', 'hold']
 
 class SarsaTrader:
-    def __init__(self, alpha, gamma, n_states):
-        self.alpha = alpha
-        self.gamma = gamma
-        self.n_states = n_states
+    def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
+        self.alpha = alpha  # learning rate
+        self.gamma = gamma  # discount factor
+        self.epsilon = epsilon  # exploration rate
+        self.actions = ['buy', 'sell', 'hold']  # Buy, Sell, Hold
+        self.num_states = num_states  # Number of states (can be price ranges or features)
+        self.q_table = np.zeros((num_states, len(self.actions)))  # Q-table initialization
 
     def get_state_index(self, state, min_price, max_price):
         # Normalize price to get a state index (for simplicity, using price-to-index mapping)
