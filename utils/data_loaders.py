@@ -4,7 +4,24 @@ import pandas as pd
 import datetime as dt
 
 
-def get_positions():
+"""
+Returns current account balance value (usually the currency is USD)
+"""
+def get_current_balance() -> float:
+    acc_info = mt5.account_info()
+    return acc_info.balance
+
+def get_positions_historical(symbol: str, date: dt.datetime, candles: int) -> pd.DataFrame:
+    hist_data = mt5.copy_rates_from(symbol, mt5.TIMEFRAME_M15, date, candles)
+    print(f"hist data: {hist_data}")
+    hist_data_df = pd.DataFrame(hist_data)
+    print(f"hist data df: {hist_data_df}")
+    hist_data_df.time = pd.to_datetime(hist_data_df.time, unit="s")
+    hist_data_df.set_index("time", inplace=True)
+    
+    return hist_data_df
+
+def get_positions() -> pd.DataFrame:
     positions = mt5.positions_get()
 
     if len(positions) > 0:
