@@ -59,8 +59,8 @@ class QLearningTrader:
             reward = 0  # No reward for holding
         return reward
 
-    def extract_data_from_positions(self, pos: pd.DataFrame) -> list[float]:
-        return pos['close'].values
+    def extract_prices_from_data(self, data: pd.DataFrame) -> list[float]:
+        return data['close'].values
     
     def get_min_and_max_price_from_data(self, data: np.ndarray) -> tuple[float, float]:
         min_price = np.min(data)
@@ -68,20 +68,20 @@ class QLearningTrader:
         
         return (min_price, max_price)
 
-    def train(self, pos: pd.DataFrame) -> None:
-        data = self.extract_data_from_positions(pos)
+    def train(self, data: pd.DataFrame) -> None:
+        prices = self.extract_prices_from_data(data)
         
-        print(f"extracted train data: {data}")
+        print(f"extracted train data: {prices}")
         
         # Find min and max prices for normalization
-        min_price, max_price = self.get_min_and_max_price_from_data(data)
+        min_price, max_price = self.get_min_and_max_price_from_data(prices)
         
         print(f"min price: {min_price}")
 
         # Training on Forex data
-        for i in range(1, len(data)):
-            current_price = data[i-1]
-            next_price = data[i]
+        for i in range(1, len(prices)):
+            current_price = prices[i-1]
+            next_price = prices[i]
 
             # Choose action using epsilon-greedy strategy
             action = self.choose_action(current_price, min_price, max_price)
@@ -92,33 +92,33 @@ class QLearningTrader:
             # Update Q-table
             self.update_q_table(current_price, action, reward, next_price, min_price, max_price)
 
-    def test(self, pos: pd.DataFrame) -> float:
-        data = self.extract_data_from_positions(pos)
+    def test(self, data: pd.DataFrame) -> float:
+        prices = self.extract_prices_from_data(data)
         
         # Find min and max prices for normalization
-        min_price, max_price = self.get_min_and_max_price_from_data(data)
+        min_price, max_price = self.get_min_and_max_price_from_data(prices)
 
         # Test the trained model with new data
         total_profit = 0
-        for i in range(1, len(data)):
-            current_price = data[i-1]
+        for i in range(1, len(prices)):
+            current_price = prices[i-1]
             action = self.choose_action(current_price, min_price, max_price)
-            future_price = data[i]
+            future_price = prices[i]
             reward = self.calculate_reward(current_price, action, future_price)
             total_profit += reward
         return total_profit
     
-    def perform_trading(self, pos: pd.DataFrame, currency: str):
-        data = self.extract_data_from_positions(pos)
+    def perform_trading(self, data: pd.DataFrame, currency: str):
+        prices = self.extract_prices_from_data(data)
         
         # Find min and max prices for normalization
-        min_price, max_price = self.get_min_and_max_price_from_data(data)
+        min_price, max_price = self.get_min_and_max_price_from_data(prices)
         
         # Test the trained model with new data
-        for i in range(1, len(data)):
-            current_price = data[i-1]
+        for i in range(1, len(prices)):
+            current_price = prices[i-1]
             action = self.choose_action(current_price, min_price, max_price)
-            future_price = data[i]
+            future_price = prices[i]
             
             print(f"action: {action}")
             
@@ -129,17 +129,17 @@ class QLearningTrader:
 def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:
     return all_positions.loc[all_positions[CURRENCY_COLUMN_NAME] == currency]
 
-def run_algorithm_for_currency(currency: str, positions_for_currency: pd.DataFrame) -> None:
+def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -> None:
     # We want to create new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
     agent = QLearningTrader()
             
-    agent.train(positions_for_currency)
+    agent.train(data_for_currency)
         
     print(f"Testing the trained model for currency={currency} ...")
-    profit = agent.test(positions_for_currency)
+    profit = agent.test(data_for_currency)
     print(f'Total profit from testing:{profit} for currency={currency}')
             
-    agent.perform_trading(positions_for_currency, currency)
+    agent.perform_trading(data_for_currency, currency)
 
 def qlearning():    
     try:                    
