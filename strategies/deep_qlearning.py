@@ -7,13 +7,21 @@ from keras.api.optimizers import Adam
 import MetaTrader5 as mt5
 import time
 
-from utils.constants import CURRENCY_PAIRS
+from utils.constants import CURRENCY_PAIRS, POSITION_SIZE, TradeAction
 from utils.data_loaders import get_5m_candles
+from utils.orders import market_order
 
 LOT_SIZE = 0.1
 EPISODES = 1000
 STEPS_PER_EPISODE = 500
 BATCH_SIZE = 32
+
+ACTION_TO_TRADE_ACTION_MAPPINGS = {
+    0: TradeAction.HOLD,
+    1: TradeAction.BUY,
+    2: TradeAction.SELL,
+    3: TradeAction.CLOSE_POSITIONS
+}
 
 # ---------------------------
 # Environment for Forex Trading
@@ -63,89 +71,71 @@ class ForexEnv:
         # Get current market data
         state = self._get_market_data()
         price = state[0]
-        result = ''
+        
+        trade_action = ACTION_TO_TRADE_ACTION_MAPPINGS[action]
+        result = market_order(self.symbol, POSITION_SIZE, trade_action.value)
+        
         
         # Action execution:
         if action == 1:  # Buy
-            # Create a buy order
-            order_request = {
-                "action": mt5.TRADE_ACTION_DEAL,
-                "symbol": self.symbol,
-                "volume": self.lot_size,
-                "type": mt5.ORDER_TYPE_BUY,
-                "price": price,
-                "deviation": 20,
-                "magic": 234000,
-                "comment": "DQN Buy Order",
-                "type_time": mt5.ORDER_TIME_GTC,
-                "type_filling": mt5.ORDER_FILLING_IOC,
-            }
-            result = mt5.order_send(order_request)
             if result.retcode == mt5.TRADE_RETCODE_DONE:
                 reward = 0.1  # small positive reward for entering trade
             else:
                 reward = -0.1  # penalty if order failed
 
         elif action == 2:  # Sell
-            # Create a sell order
-            order_request = {
-                "action": mt5.TRADE_ACTION_DEAL,
-                "symbol": self.symbol,
-                "volume": self.lot_size,
-                "type": mt5.ORDER_TYPE_SELL,
-                "price": price,
-                "deviation": 20,
-                "magic": 234000,
-                "comment": "DQN Sell Order",
-                "type_time": mt5.ORDER_TIME_GTC,
-                "type_filling": mt5.ORDER_FILLING_IOC,
-            }
-            result = mt5.order_send(order_request)
             if result.retcode == mt5.TRADE_RETCODE_DONE:
                 reward = 0.1
             else:
                 reward = -0.1
 
         elif action == 3:  # Close open positions
-            positions = mt5.positions_get(symbol=self.symbol)
-            if positions is None or len(positions) == 0:
-                reward = -0.05  # penalty for trying to close when no positions exist
-            else:
-                # Close each open position
-                for pos in positions:
-                    if pos.type == mt5.ORDER_TYPE_BUY:
-                        close_type = mt5.ORDER_TYPE_SELL
-                    else:
-                        close_type = mt5.ORDER_TYPE_BUY
-                    close_request = {
-                        "action": mt5.TRADE_ACTION_DEAL,
-                        "symbol": self.symbol,
-                        "volume": pos.volume,
-                        "type": close_type,
-                        "position": pos.ticket,
-                        "price": price,
-                        "deviation": 20,
-                        "magic": 234000,
-                        "comment": "DQN Close Order",
-                        "type_time": mt5.ORDER_TIME_GTC,
-                        "type_filling": mt5.ORDER_FILLING_IOC,
-                    }
-                    close_result = mt5.order_send(close_request)
-                    # You might want to compute reward based on profit/loss from this close action
-                    if close_result.retcode == mt5.TRADE_RETCODE_DONE:
-                        reward += 0.2  # bonus for closing at a good moment
-                    else:
-                        reward -= 0.1
+            # positions = mt5.positions_get(symbol=self.symbol)
+            # if positions is None or len(positions) == 0:
+            #     reward = -0.05  # penalty for trying to close when no positions exist
+            # else:
+            #     # Close each open position
+            #     for pos in positions:
+            #         if pos.type == mt5.ORDER_TYPE_BUY:
+            #             close_type = mt5.ORDER_TYPE_SELL
+            #         else:
+            #             close_type = mt5.ORDER_TYPE_BUY
+            #         close_request = {
+            #             "action": mt5.TRADE_ACTION_DEAL,
+            #             "symbol": self.symbol,
+            #             "volume": pos.volume,
+            #             "type": close_type,
+            #             "position": pos.ticket,
+            #             "price": price,
+            #             "deviation": 20,
+            #             "magic": 234000,
+            #             "comment": "DQN Close Order",
+            #             "type_time": mt5.ORDER_TIME_GTC,
+            #             "type_filling": mt5.ORDER_FILLING_IOC,
+            #         }
+            #         close_result = mt5.order_send(close_request)
+            #         # You might want to compute reward based on profit/loss from this close action
+            #         if close_result.retcode == mt5.TRADE_RETCODE_DONE:
+            #             reward += 0.2  # bonus for closing at a good moment
+            #         else:
+            #             reward -= 0.1
+            
+            # You might want to compute reward based on profit/loss from this close action
+                if result.retcode == mt5.TRADE_RETCODE_DONE:
+                    reward += 0.2  # bonus for closing at a good moment
+                else:
+                    reward -= 0.1
+            
         else:
             # Hold action; perhaps incur a small time penalty to encourage action
             reward = -0.01
 
-        print(f"order result={result}")
+        print(f"order result={result}; order reward={reward}")
 
         # For a real application, you would compute reward based on P&L and risk metrics.
         # Also, define termination conditions (e.g., reaching a time limit or drawdown threshold).
         # Here we use a dummy condition.
-        done = False
+        done = True
 
         # Get the next state
         next_state = self._get_market_data()
