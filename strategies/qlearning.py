@@ -12,6 +12,25 @@ class QLearningTrader(BaseQLearningTrader):
     def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
         super().__init__(alpha, gamma, epsilon, num_states)
 
+    def fill_q_table(self, prices):
+        # Find min and max prices for normalization
+        min_price, max_price = self.get_min_and_max_price_from_data(prices)
+        
+        print(f"min price: {min_price}")
+        
+        for i in range(1, len(prices)):
+            current_price = prices[i-1]
+            next_price = prices[i]
+
+            # Choose action using epsilon-greedy strategy
+            action = self.choose_action(current_price, min_price, max_price)
+
+            # Calculate the reward
+            reward = self.calculate_reward(current_price, action, next_price)
+
+            # Update Q-table
+            self.update_q_table(current_price, action, reward, next_price, min_price, max_price)
+
     def update_q_table(self, state, action: TradeAction, reward, next_state, min_price, max_price):
         state_idx = self.get_state_index(state, min_price, max_price)
         action_idx = self.get_action_index(action)
@@ -21,6 +40,8 @@ class QLearningTrader(BaseQLearningTrader):
         best_future_q = np.max(self.q_table[next_state_idx])  # Best Q-value for next state
         self.q_table[state_idx, action_idx] = (1 - self.alpha) * self.q_table[state_idx, action_idx] + \
                                                 self.alpha * (reward + self.gamma * best_future_q)
+                                                
+        print(f"q-table={self.q_table}")
 
 def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:
     return all_positions.loc[all_positions[CURRENCY_COLUMN_NAME] == currency]

@@ -33,9 +33,9 @@ class BaseQLearningTrader(ABC):
             return random.choice(self.actions)  # Exploration
         else:
             return self.actions[np.argmax(self.q_table[state_idx])]  # Exploitation
-
+    
     @abstractmethod
-    def update_q_table(self, state, action: TradeAction, reward, next_state, min_price, max_price):
+    def fill_q_table(self, prices: list[float]):
         pass
 
     def calculate_reward(self, current_price: float, action: TradeAction, future_price: float) -> float:
@@ -61,25 +61,9 @@ class BaseQLearningTrader(ABC):
         prices = self.extract_prices_from_data(data)
         
         print(f"extracted train data: {prices}")
-        
-        # Find min and max prices for normalization
-        min_price, max_price = self.get_min_and_max_price_from_data(prices)
-        
-        print(f"min price: {min_price}")
 
         # Training on Forex data
-        for i in range(1, len(prices)):
-            current_price = prices[i-1]
-            next_price = prices[i]
-
-            # Choose action using epsilon-greedy strategy
-            action = self.choose_action(current_price, min_price, max_price)
-
-            # Calculate the reward
-            reward = self.calculate_reward(current_price, action, next_price)
-
-            # Update Q-table
-            self.update_q_table(current_price, action, reward, next_price, min_price, max_price)
+        self.fill_q_table(prices)
 
     def test(self, data: pd.DataFrame) -> float:
         prices = self.extract_prices_from_data(data)
