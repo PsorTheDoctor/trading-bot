@@ -10,7 +10,7 @@ from strategies.sarsa import sarsa
 ALGORITHMS = {
     'renko': macd_renko,
     'qlearning': qlearning,
-    'deep-qlearning': deep_qlearning,,
+    'deep-qlearning': deep_qlearning,
     'sarsa': sarsa,
 }
 DEFAULT_ALGORITHM_NAME = 'renko'
