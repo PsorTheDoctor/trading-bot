@@ -11,14 +11,15 @@ from utils.constants import CURRENCY_PAIRS, CURRENCY_PAIRS, POSITION_SIZE
 ActionType = Literal['buy', 'sell', 'hold']
 
 
-class SarsaTrader:
+class DoubleQLearningTrader:
     def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
         self.alpha = alpha  # learning rate
         self.gamma = gamma  # discount factor
         self.epsilon = epsilon  # exploration rate
         self.actions = ['buy', 'sell', 'hold']  # Buy, Sell, Hold
         self.num_states = num_states  # Number of states (can be price ranges or features)
-        self.q_table = np.zeros((num_states, len(self.actions)))  # Q-table initialization
+        self.q1_table = np.zeros((num_states, len(self.actions)))  # Q1-table initialization
+        self.q2_table = np.zeros((num_states, len(self.actions)))  # Q2-table initialization
 
     def get_state_index(self, state, min_price, max_price):
         # Normalize price to get a state index (for simplicity, using price-to-index mapping)
@@ -37,16 +38,24 @@ class SarsaTrader:
         else:
             return self.actions[np.argmax(self.q_table[state_idx])]  # Exploitation
 
-    def update_q_table(self, state, action, reward, next_state, next_action, min_price, max_price):
+    def update_q_table(self, state, action: ActionType, reward, next_state, min_price, max_price):
         state_idx = self.get_state_index(state, min_price, max_price)
         action_idx = self.get_action_index(action)
         next_state_idx = self.get_state_index(next_state, min_price, max_price)
-        next_action_idx = self.get_action_index(next_action)
 
-        # Q-table update formula
-        next_q_value = self.q_table[next_state_idx, next_action_idx]
-        self.q_table[state_idx, action_idx] = (1 - self.alpha) * self.q_table[state_idx, action_idx] + \
-          self.alpha * (reward + self.gamma * next_q_value)
+        # Randomly select whether to update Q1-table or Q2-table
+        if np.random.rand() < 0.5:
+            # Q1-table update formula
+            best_action_idx = np.argmax(self.q1_table[next_state_idx])
+            target_q = self.q2_table[next_state_idx, best_action_idx]
+            self.q1_table[state_idx, action_idx] = (1 - self.alpha) * self.q1_table[state_idx, action_idx] + \
+                                                   self.alpha * (reward + self.gamma * target_q)
+        else:
+            # Q2-table update formula
+            best_action_idx = np.argmax(self.q2_table[next_state_idx])
+            target_q = self.q1_table[next_state_idx, best_action_idx]
+            self.q2_table[state_idx, action_idx] = (1 - self.alpha) * self.q2_table[state_idx, action_idx] + \
+                                                   self.alpha * (reward + self.gamma * target_q)
 
     def calculate_reward(self, current_price: float, action: ActionType, future_price: float) -> float:
         # Define the reward function for Forex trading
@@ -69,10 +78,12 @@ class SarsaTrader:
 
     def train(self, data: pd.DataFrame) -> None:
         prices = self.extract_prices_from_data(data)
+
         print(f"extracted train data: {prices}")
 
         # Find min and max prices for normalization
         min_price, max_price = self.get_min_and_max_price_from_data(prices)
+
         print(f"min price: {min_price}")
 
         # Training on Forex data
@@ -86,11 +97,8 @@ class SarsaTrader:
             # Calculate the reward
             reward = self.calculate_reward(current_price, action, next_price)
 
-            # Select next action using the same policy
-            next_action = self.choose_action(next_price, min_price, max_price)
-
-            # Update Q-table
-            self.update_q_table(current_price, action, reward, next_price, next_action, min_price, max_price)
+            # Update Q-tables
+            self.update_q_table(current_price, action, reward, next_price, min_price, max_price)
 
     def test(self, data: pd.DataFrame) -> float:
         prices = self.extract_prices_from_data(data)
@@ -127,7 +135,7 @@ class SarsaTrader:
 
 def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -> None:
     # We want to create a new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
-    agent = SarsaTrader()
+    agent = DoubleQLearningTrader()
     agent.train(data_for_currency)
 
     print(f"Testing the trained model for currency={currency} ...")
@@ -137,13 +145,13 @@ def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -
     agent.perform_trading(data_for_currency, currency)
 
 
-def sarsa():
+def double_qlearning():
     try:
         open_pos = get_positions()
         print(f"open_pos head: {open_pos.head()}")
 
         for currency in CURRENCY_PAIRS:
-            print(f"Running SARSA for currency={currency}")
+            print(f"Running Double Q-learning for currency={currency}")
 
             data_for_currency = get_5m_candles(currency)
             print(f"data for currency ({currency})={data_for_currency.head()}")

@@ -12,6 +12,8 @@ ALGORITHMS = {
     'qlearning': qlearning,
     'deep-qlearning': deep_qlearning,
     'sarsa': sarsa,
+    'double_qlearning': double_qlearning,
+    'expected_sarsa': expected_sarsa
 }
 DEFAULT_ALGORITHM_NAME = 'renko'
 
