@@ -13,6 +13,8 @@ from utils.constants import CURRENCY_COLUMN_NAME, CURRENCY_PAIRS, POSITION_SIZE
 
 type ActionsType = Literal['buy', 'sell', 'hold']
 
+MAX_TRADES_PER_ALGORITHM_ITERATION = 5
+
 class QLearningTrader:
     def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
         self.alpha = alpha  # learning rate
@@ -115,7 +117,8 @@ class QLearningTrader:
         min_price, max_price = self.get_min_and_max_price_from_data(prices)
         
         # Test the trained model with new data
-        for i in range(1, len(prices)):
+        max_actions_per_algorithm_iteration = min(MAX_TRADES_PER_ALGORITHM_ITERATION, len(prices))
+        for i in range(1, max_actions_per_algorithm_iteration):
             current_price = prices[i-1]
             action = self.choose_action(current_price, min_price, max_price)
             future_price = prices[i]
