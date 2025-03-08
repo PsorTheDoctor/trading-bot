@@ -1,3 +1,4 @@
+from enum import Enum
 import traceback
 from typing import Literal
 import numpy as np
@@ -11,16 +12,19 @@ from utils.data_loaders import get_positions,get_5m_candles, get_positions_histo
 from utils.orders import market_order
 from utils.constants import CURRENCY_COLUMN_NAME, CURRENCY_PAIRS, POSITION_SIZE
 
-type ActionsType = Literal['buy', 'sell', 'hold']
-
 MAX_TRADES_PER_ALGORITHM_ITERATION = 5
+
+class TradeAction(Enum):
+    BUY = 'buy'
+    SELL = 'sell'
+    HOLD = 'hold'
 
 class QLearningTrader:
     def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
         self.alpha = alpha  # learning rate
         self.gamma = gamma  # discount factor
         self.epsilon = epsilon  # exploration rate
-        self.actions = ['buy', 'sell', 'hold']  # Buy, Sell, Hold
+        self.actions = [TradeAction.BUY, TradeAction.SELL, TradeAction.HOLD]  # Buy, Sell, Hold
         self.num_states = num_states  # Number of states (can be price ranges or features)
         self.q_table = np.zeros((num_states, len(self.actions)))  # Q-table initialization
 
@@ -33,7 +37,7 @@ class QLearningTrader:
     def get_action_index(self, action):
         return self.actions.index(action)
 
-    def choose_action(self, state, min_price, max_price) -> ActionsType:
+    def choose_action(self, state, min_price, max_price) -> TradeAction:
         # Epsilon-greedy strategy for action selection
         state_idx = self.get_state_index(state, min_price, max_price)
         if random.uniform(0, 1) < self.epsilon:
@@ -41,7 +45,7 @@ class QLearningTrader:
         else:
             return self.actions[np.argmax(self.q_table[state_idx])]  # Exploitation
 
-    def update_q_table(self, state, action: ActionsType, reward, next_state, min_price, max_price):
+    def update_q_table(self, state, action: TradeAction, reward, next_state, min_price, max_price):
         state_idx = self.get_state_index(state, min_price, max_price)
         action_idx = self.get_action_index(action)
         next_state_idx = self.get_state_index(next_state, min_price, max_price)
@@ -51,11 +55,11 @@ class QLearningTrader:
         self.q_table[state_idx, action_idx] = (1 - self.alpha) * self.q_table[state_idx, action_idx] + \
                                                 self.alpha * (reward + self.gamma * best_future_q)
 
-    def calculate_reward(self, current_price: float, action: ActionsType, future_price: float) -> float:
+    def calculate_reward(self, current_price: float, action: TradeAction, future_price: float) -> float:
         # Define the reward function for Forex trading
-        if action == 'buy':
+        if action == TradeAction.BUY:
             reward = future_price - current_price  # Price change after buying
-        elif action == 'sell':
+        elif action == TradeAction.SELL:
             reward = current_price - future_price  # Price change after selling
         else:  # Hold
             reward = 0  # No reward for holding
@@ -125,8 +129,8 @@ class QLearningTrader:
             
             print(f"action: {action}")
             
-            if action == 'buy' or action == 'sell':
-                order_status = market_order(currency, POSITION_SIZE, action)
+            if action == TradeAction.BUY or action == TradeAction.SELL:
+                order_status = market_order(currency, POSITION_SIZE, action.value)
                 print(f"order status: {order_status}")
 
 def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:
