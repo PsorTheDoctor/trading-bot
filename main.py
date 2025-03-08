@@ -3,7 +3,7 @@ import time
 import sys
 
 from strategies.macd_renko import macd_renko
-from qlearning import qlearning
+from strategies.qlearning import qlearning
 from strategies.sarsa import sarsa
 
 ALGORITHMS = {
