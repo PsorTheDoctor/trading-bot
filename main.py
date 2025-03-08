@@ -1,14 +1,18 @@
 import MetaTrader5 as mt5
 import time
 import sys
+
 from strategies.macd_renko import macd_renko
 from qlearning import qlearning
+from strategies.sarsa import sarsa
 
 ALGORITHMS = {
     'renko': macd_renko,
-    'qlearning': qlearning
+    'qlearning': qlearning,
+    'sarsa': sarsa,
 }
 DEFAULT_ALGORITHM_NAME = 'renko'
+
 
 if __name__ == '__main__':
     algorithm_name = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_ALGORITHM_NAME
