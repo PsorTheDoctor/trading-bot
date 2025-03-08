@@ -10,6 +10,8 @@ from utils.constants import CURRENCY_PAIRS, POSITION_SIZE
 def trade_signal(merged_df, long_short):
     signal = ''
     df = copy.deepcopy(merged_df)
+    
+    print(f"long short={long_short}")
 
     if long_short == '':
         if df['bar_num'].tolist()[-1] >= 2 and df['macd'].tolist()[-1] > df['macd_sig'].tolist()[-1]:
