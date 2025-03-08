@@ -4,11 +4,13 @@ import sys
 
 from strategies.macd_renko import macd_renko
 from strategies.qlearning import qlearning
+from strategies.deep_qlearning import deep_qlearning
 from strategies.sarsa import sarsa
 
 ALGORITHMS = {
     'renko': macd_renko,
     'qlearning': qlearning,
+    'deep-qlearning': deep_qlearning,,
     'sarsa': sarsa,
 }
 DEFAULT_ALGORITHM_NAME = 'renko'
