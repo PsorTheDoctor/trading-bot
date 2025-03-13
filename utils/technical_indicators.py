@@ -97,3 +97,43 @@ def obv(df):
     df['vol_adj'] = df['volume'] = df['direction']
     df['obv'] = df['vol_adj'].cumsum()
     return df['obv']
+
+
+def ema(df, b):
+    df = df.copy()
+    df['ema'] = df['close'].ewm(span=b, min_periods=b).mean()
+    df.dropna(inplace=True)
+    return df['ema']
+
+
+def ichimoku(df, tenkan_sen=9, kijun_sen=26, senkou_span_b=52):
+    df = df.copy()
+    df['tenkan_sen'] = (df['high'].rolling(window=tenkan_sen).max() + df['low'].rolling(window=tenkan_sen).min()) / 2
+    df['kijun_sen'] = (df['high'].rolling(window=kijun_sen).max() + df['low'].rolling(window=kijun_sen).min()) / 2
+    df['chikou_span'] = df['close'].shift(-kijun_sen)
+    df['senkou_span_a'] = ((df['tenkan_sen'] + df['kijun_sen']) / 2).shift(kijun_sen)
+    df['senkou_span_b'] = ((df['high'].rolling(window=senkou_span_b).max() + df['low'].rolling(window=senkou_span_b).min()) / 2).shift(kijun_sen)
+    df.dropna(inplace=True)
+    return df[['tenkan_sen', 'kijun_sen', 'chikou_span', 'senkou_span_a', 'senkou_span_b']]
+
+
+def stochastic_oscillator(df, k_period=14, d_period=3):
+    df = df.copy()
+    df['lowest_low'] = df['low'].rolling(window=k_period).min()
+    df['highest_high'] = df['high'].rolling(window=k_period).max()
+    df['%K'] = (df['close'] - df['lowest_low']) / (df['highest_high'] - df['lowest_low']) * 100
+    df['%D'] = df['%K'].rolling(window=d_period).mean()
+    df.drop(columns=['lowest_low', 'highest_high'], inplace=True)
+    df.dropna(inplace=True)
+    return df[['%K', '%D']]
+
+
+def cci(df, period=20):
+    df = df.copy()
+    df['tp'] = (df['high'] + df['low'] + df['close']) / 3
+    df['sma_tp'] = df['tp'].rolling(window=period).mean()
+    df['mad'] = df['tp'].rolling(window=period).apply(lambda x: (x - x.mean()).abs().mean(), raw=True)
+    df['CCI'] = (df['tp'] - df['sma_tp']) / (0.015 * df['mad'])
+    df.drop(columns=['tp', 'sma_tp', 'mad'], inplace=True)
+    df.dropna(inplace=True)
+    return df[['CCI']]
