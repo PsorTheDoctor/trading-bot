@@ -137,3 +137,50 @@ def cci(df, period=20):
     df.drop(columns=['tp', 'sma_tp', 'mad'], inplace=True)
     df.dropna(inplace=True)
     return df[['CCI']]
+
+
+def mfi(df, period=14):
+    """
+    Money Flow Index - podobny do RSI, ale uwzględnia jeszcze wolumen.
+    """
+    df = df.copy()
+    df['tp'] = (df['high'] + df['low'] + df['close']) / 3
+    df['mf'] = df['tp'] * df['volume']
+    df['mf_positive'] = df['mf'].where(df['tp'].diff() > 0, 0)
+    df['mf_negative'] = df['mf'].where(df['tp'].diff() < 0, 0)
+    df['sum_mf_positive'] = df['mf_positive'].rolling(window=period).sum()
+    df['sum_mf_negative'] = df['mf_negative'].rolling(window=period).sum()
+    df['mfr'] = df['sum_mf_positive'] / df['sum_mf_negative']
+    df['mfi'] = 100 - (100 / (1 + df['mfr']))
+    df.dropna(inplace=True)
+    return df['mfi']
+
+
+def donchian_channels(df, period=20):
+    """
+    Donchian Channels - kanał to trzy linie generowane poniższymi wzorami;
+    gdy cena przekroczy górną linię to może sugerować początek trendu wzrostowego, analogicznie odwrotnie
+    """
+    df = df.copy()
+    df['upper'] = df['high'].rolling(window=period).max()
+    df['lower'] = df['low'].rolling(window=period).min()
+    df['middle'] = (df['upper'] + df['lower']) / 2
+    df.dropna(inplace=True)
+    return df[['upper', 'lower', 'middle']]
+
+
+def pivot_points(df):
+    """
+    Pivot Points - oblicza się poziomy wsparcia i oporu; cena powyżej punktu pivota to trend wzrostowy, poniżej - spadkowy.
+    Do tego mamy punkty wsparcia i oporu pokazujące wsparcie/opór
+    """
+    df = df.copy()
+    df['pivot_points'] = (df['high'] + df['low'] + df['close']) / 3
+    df['S1'] = 2 * df['pivot_points'] - df['high']
+    df['R1'] = 2 * df['pivot_points'] - df['low']
+    df['S2'] = df['pivot_points'] - (df['high'] - df['low'])
+    df['R2'] = df['pivot_points'] + (df['high'] - df['low'])
+    df['S3'] = df['low'] - 2 * (df['high'] - df['pivot_points'])
+    df['R3'] = df['high'] + 2 * (df['pivot_points'] - df['low'])
+    df.dropna(inplace=True)
+    return df[['pivot_points', 'S1', 'R1', 'S2', 'R2', 'S3', 'R3']]
