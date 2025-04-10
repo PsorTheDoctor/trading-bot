@@ -41,7 +41,7 @@ class QLearningTrader(BaseQLearningTrader):
         self.q_table[state_idx, action_idx] = (1 - self.alpha) * self.q_table[state_idx, action_idx] + \
                                                 self.alpha * (reward + self.gamma * best_future_q)
                                                 
-        print(f"q-table={self.q_table}")
+        # print(f"q-table={self.q_table}")
 
 def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:
     return all_positions.loc[all_positions[CURRENCY_COLUMN_NAME] == currency]

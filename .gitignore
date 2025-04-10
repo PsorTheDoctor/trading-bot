@@ -180,3 +180,4 @@ cython_debug/
 # Project-specific
 
 meta_trader_key.txt
+cache/
