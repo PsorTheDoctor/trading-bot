@@ -10,7 +10,7 @@ from utils.constants import POSITION_SIZE, TradeAction
 
 MAX_TRADES_PER_ALGORITHM_ITERATION = 5
 
-Q_TABLE_FILE_DIRECTORY_PATH = path.join(Path(__file__ ), '../', '../', 'cache')
+Q_TABLE_FILE_DIRECTORY_PATH = path.join(Path(__file__ ).parent.parent, 'cache')
 Q_TABLE_FILE_NAME = 'qlearning-qtable-content.npy'
 Q_TABLE_FILE_FULL_PATH = path.join(Q_TABLE_FILE_DIRECTORY_PATH, Q_TABLE_FILE_NAME)
 
