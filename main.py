@@ -8,6 +8,7 @@ from strategies.deep_qlearning import deep_qlearning
 from strategies.sarsa import sarsa
 from strategies.double_qlearning import double_qlearning
 from strategies.expected_sarsa import expected_sarsa
+from utils.traders.metatrader5_trader import MetaTrader5Trader
 
 ALGORITHMS = {
     'renko': macd_renko,
@@ -19,6 +20,11 @@ ALGORITHMS = {
 }
 DEFAULT_ALGORITHM_NAME = 'renko'
 
+TRADERS = {
+    'mt5': MetaTrader5Trader()
+}
+DEFAULT_TRADER_NAME = 'mt5'
+
 
 if __name__ == '__main__':
     algorithm_name = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_ALGORITHM_NAME
@@ -26,13 +32,14 @@ if __name__ == '__main__':
     if not algorithm:
         raise Exception(f"Unsupported algorithm: {algorithm_name}")
     
+    trader_name = sys.argv[2] if len(sys.argv) >= 3 else DEFAULT_TRADER_NAME
+    trader = TRADERS.get(trader_name)
+    if not trader:
+        raise Exception(f"Unsupported trader platform: {trader_name}")
+    
     interval = 60  # 1-minute interval in seconds
 
-    key = open('meta_trader_key.txt', 'r').read().split()
-    path = r'C:\Program Files\MetaTrader 5\terminal64.exe'
-
-    if mt5.initialize(path=path, login=int(key[0]), password=key[1], server=key[2]):
-        print('Connected')
+    trader.connect_with_trader()
 
     start = time.time()
     timeout = time.time() + 3600
