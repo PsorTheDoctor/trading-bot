@@ -8,6 +8,8 @@ from strategies.deep_qlearning import deep_qlearning
 from strategies.sarsa import sarsa
 from strategies.double_qlearning import double_qlearning
 from strategies.expected_sarsa import expected_sarsa
+from utils.traders.base_trader import BaseTrader
+from utils.traders.bossa_trader import BossaTrader
 from utils.traders.metatrader5_trader import MetaTrader5Trader
 
 ALGORITHMS = {
@@ -20,8 +22,9 @@ ALGORITHMS = {
 }
 DEFAULT_ALGORITHM_NAME = 'renko'
 
-TRADERS = {
-    'mt5': MetaTrader5Trader()
+TRADERS: dict[str, BaseTrader] = {
+    'mt5': MetaTrader5Trader(),
+    'bossa': BossaTrader(), # WIP, don't use yet
 }
 DEFAULT_TRADER_NAME = 'mt5'
 
