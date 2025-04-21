@@ -6,7 +6,6 @@ from utils.traders.base_trader import BaseTrader
 
 class MetaTrader5Trader(BaseTrader):    
     def connect_with_trader(self):
-        # key = open('../../meta_trader_key.txt', 'r').read().split()
         key = open(path.join(Path(__file__ ).parent.parent.parent,'meta_trader_key.txt'), 'r').read().split()
         terminal_path = r'C:\Program Files\MetaTrader 5\terminal64.exe'
 
