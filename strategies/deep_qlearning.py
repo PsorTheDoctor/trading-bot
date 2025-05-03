@@ -9,7 +9,7 @@ import pandas as pd
 from strategies.qlearning_basic import BaseQLearningTrader
 from utils.constants import CURRENCY_PAIRS, POSITION_SIZE, TradeAction
 from utils.data_loaders import get_5m_candles, get_positions
-from utils.orders import market_order
+from utils.traders.base_trader import BaseTrader
 
 LOT_SIZE = 0.1
 EPISODES = 1000
@@ -27,8 +27,8 @@ ACTION_TO_TRADE_ACTION_MAPPINGS = {
 # Environment for Forex Trading
 # ---------------------------
 class DeepQLearningTrader(BaseQLearningTrader):
-    def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100, state_size=1, action_size=len(ACTION_TO_TRADE_ACTION_MAPPINGS.keys())):
-        super().__init__(alpha, gamma, epsilon, num_states)
+    def __init__(self, trader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100, state_size=1, action_size=len(ACTION_TO_TRADE_ACTION_MAPPINGS.keys())):
+        super().__init__(trader, alpha, gamma, epsilon, num_states)
         self.state_size = state_size
         self.action_size = action_size
         
@@ -56,9 +56,9 @@ class DeepQLearningTrader(BaseQLearningTrader):
         self.q_table = q_table  # Save the Q-table in the class field
         
 
-def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -> None:
+def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame, trader: BaseTrader) -> None:
     # We want to create new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
-    agent = DeepQLearningTrader()
+    agent = DeepQLearningTrader(trader)
             
     agent.train(data_for_currency)
         
@@ -68,7 +68,7 @@ def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -
             
     agent.perform_trading(data_for_currency, currency)
 
-def deep_qlearning():    
+def deep_qlearning(trader):    
     try:                    
         open_pos = get_positions()
         print(f"open_pos head: {open_pos.head()}")
@@ -78,7 +78,7 @@ def deep_qlearning():
             
             data_for_currency = get_5m_candles(currency)
             print(f"data for currency ({currency})={data_for_currency.head()}")
-            run_algorithm_for_currency(currency, data_for_currency)
+            run_algorithm_for_currency(currency, data_for_currency, trader)
             
             
     except Exception as e:

@@ -1,21 +1,43 @@
+from pathlib import Path
+from os import path, makedirs
 import numpy as np
 import random
 import pandas as pd
 from abc import ABC, abstractmethod
 
-from utils.orders import market_order
 from utils.constants import POSITION_SIZE, TradeAction
+from utils.traders.base_trader import BaseTrader
 
 MAX_TRADES_PER_ALGORITHM_ITERATION = 5
 
+Q_TABLE_FILE_DIRECTORY_PATH = path.join(Path(__file__ ).parent.parent, 'cache')
+Q_TABLE_FILE_NAME = 'qlearning-qtable-content.npy'
+Q_TABLE_FILE_FULL_PATH = path.join(Q_TABLE_FILE_DIRECTORY_PATH, Q_TABLE_FILE_NAME)
+
 class BaseQLearningTrader(ABC):
-    def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
+    def __init__(self, trader: BaseTrader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
+        self.trader = trader
         self.alpha = alpha  # learning rate
         self.gamma = gamma  # discount factor
         self.epsilon = epsilon  # exploration rate
         self.actions = [TradeAction.BUY, TradeAction.SELL, TradeAction.HOLD, TradeAction.CLOSE_POSITIONS]  # Buy, Sell, Hold
         self.num_states = num_states  # Number of states (can be price ranges or features)
-        self.q_table = np.zeros((num_states, len(self.actions)))  # Q-table initialization
+        
+        self.load_q_table_from_file()
+
+    def load_q_table_from_file(self):
+        print('Loading q-table content from file...')
+        
+        try:
+            self.q_table = np.load(Q_TABLE_FILE_FULL_PATH)
+        except FileNotFoundError:
+            print('Could not load q-table content from file - fallback to default value...')
+            self.q_table = np.zeros((self.num_states, len(self.actions)))  # Q-table initialization
+
+    def save_q_table_in_file(self):
+        print('Saving q-table content to file...')
+        makedirs(Q_TABLE_FILE_DIRECTORY_PATH, exist_ok=True)
+        np.save(Q_TABLE_FILE_FULL_PATH, self.q_table)
 
     def get_state_index(self, state, min_price, max_price):
         # Normalize price to get a state index (for simplicity, using price-to-index mapping)
@@ -64,6 +86,8 @@ class BaseQLearningTrader(ABC):
 
         # Training on Forex data
         self.fill_q_table(prices)
+        
+        self.save_q_table_in_file()
 
     def test(self, data: pd.DataFrame) -> float:
         prices = self.extract_prices_from_data(data)
@@ -97,5 +121,5 @@ class BaseQLearningTrader(ABC):
             print(f"action: {action}")
             
             if action == TradeAction.BUY or action == TradeAction.SELL:
-                order_status = market_order(currency, POSITION_SIZE, action.value)
+                order_status = self.trader.market_order(currency, POSITION_SIZE, action.value)
                 print(f"order status: {order_status}")

@@ -5,14 +5,14 @@ import random
 from typing import Literal
 
 from utils.data_loaders import get_positions, get_5m_candles
-from utils.orders import market_order
 from utils.constants import CURRENCY_PAIRS, CURRENCY_PAIRS, POSITION_SIZE
 
 ActionType = Literal['buy', 'sell', 'hold']
 
 
 class DoubleQLearningTrader:
-    def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
+    def __init__(self, trader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
+        self.trader = trader
         self.alpha = alpha  # learning rate
         self.gamma = gamma  # discount factor
         self.epsilon = epsilon  # exploration rate
@@ -129,13 +129,13 @@ class DoubleQLearningTrader:
             print(f"action: {action}")
 
             if action == 'buy' or action == 'sell':
-                order_status = market_order(currency, POSITION_SIZE, action)
+                order_status = self.trader.market_order(currency, POSITION_SIZE, action)
                 print(f"order status: {order_status}")
 
 
-def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -> None:
+def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame, trader) -> None:
     # We want to create a new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
-    agent = DoubleQLearningTrader()
+    agent = DoubleQLearningTrader(trader)
     agent.train(data_for_currency)
 
     print(f"Testing the trained model for currency={currency} ...")
@@ -145,7 +145,7 @@ def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -
     agent.perform_trading(data_for_currency, currency)
 
 
-def double_qlearning():
+def double_qlearning(trader):
     try:
         open_pos = get_positions()
         print(f"open_pos head: {open_pos.head()}")
@@ -155,7 +155,7 @@ def double_qlearning():
 
             data_for_currency = get_5m_candles(currency)
             print(f"data for currency ({currency})={data_for_currency.head()}")
-            run_algorithm_for_currency(currency, data_for_currency)
+            run_algorithm_for_currency(currency, data_for_currency, trader)
 
     except Exception as e:
         print(f"Unexpected error while trying to perform q-learning algorithm: {e}")

@@ -5,8 +5,8 @@ import random
 from typing import Literal
 
 from utils.data_loaders import get_positions, get_5m_candles
-from utils.orders import market_order
 from utils.constants import CURRENCY_PAIRS, CURRENCY_PAIRS, POSITION_SIZE
+from utils.traders.base_trader import BaseTrader
 
 ActionType = Literal['buy', 'sell', 'hold']
 
@@ -108,7 +108,7 @@ class SarsaTrader:
             total_profit += reward
         return total_profit
 
-    def perform_trading(self, data: pd.DataFrame, currency: str):
+    def perform_trading(self, data: pd.DataFrame, currency: str, trader: BaseTrader):
         prices = self.extract_prices_from_data(data)
 
         # Find min and max prices for normalization
@@ -121,11 +121,11 @@ class SarsaTrader:
             print(f"action: {action}")
 
             if action == 'buy' or action == 'sell':
-                order_status = market_order(currency, POSITION_SIZE, action)
+                order_status = trader.market_order(currency, POSITION_SIZE, action)
                 print(f"order status: {order_status}")
 
 
-def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -> None:
+def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame, trader: BaseTrader) -> None:
     # We want to create a new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
     agent = SarsaTrader()
     agent.train(data_for_currency)
@@ -134,10 +134,10 @@ def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -
     profit = agent.test(data_for_currency)
     print(f'Total profit from testing:{profit} for currency={currency}')
 
-    agent.perform_trading(data_for_currency, currency)
+    agent.perform_trading(data_for_currency, currency, trader)
 
 
-def sarsa():
+def sarsa(trader):
     try:
         open_pos = get_positions()
         print(f"open_pos head: {open_pos.head()}")
@@ -147,7 +147,7 @@ def sarsa():
 
             data_for_currency = get_5m_candles(currency)
             print(f"data for currency ({currency})={data_for_currency.head()}")
-            run_algorithm_for_currency(currency, data_for_currency)
+            run_algorithm_for_currency(currency, data_for_currency, trader)
 
     except Exception as e:
         print(f"Unexpected error while trying to perform q-learning algorithm: {e}")
