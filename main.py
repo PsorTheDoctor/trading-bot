@@ -1,3 +1,4 @@
+from collections.abc import Callable
 import time
 import argparse
 
@@ -13,7 +14,7 @@ from utils.traders.base_trader import BaseTrader
 from utils.traders.bossa_trader import BossaTrader
 from utils.traders.metatrader5_trader import MetaTrader5Trader
 
-ALGORITHMS = {
+ALGORITHMS: dict[str, Callable[[BaseTrader], None]] = {
     'renko_macd': renko_macd,
     'renko_obv': renko_obv,
     'qlearning': qlearning,
