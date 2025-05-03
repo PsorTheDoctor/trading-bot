@@ -3,9 +3,9 @@ import MetaTrader5 as mt5
 import pandas as pd
 import datetime as dt
 from utils.data_loaders import *
-from utils.orders import market_order
 from utils.technical_indicators import *
 from utils.constants import CURRENCY_PAIRS, POSITION_SIZE
+from utils.traders.base_trader import BaseTrader
 
 def trade_signal(merged_df, long_short):
     signal = ''
@@ -32,7 +32,7 @@ def trade_signal(merged_df, long_short):
     return signal
 
 
-def macd_renko():
+def macd_renko(trader: BaseTrader):
     try:
         open_pos = get_positions()
         for currency in CURRENCY_PAIRS:
@@ -49,23 +49,23 @@ def macd_renko():
             signal = trade_signal(renko_merge(ohlc), long_short)
 
             if signal == 'buy' or signal == 'sell':
-                market_order(currency, POSITION_SIZE, signal)
+                trader.market_order(currency, POSITION_SIZE, signal)
                 print(f'New {signal} initiated for {currency}')
             elif signal == 'close':
                 total_pos = (open_pos_cur.type * open_pos_cur.volume).sum()
                 if total_pos > 0:
-                    market_order(currency, total_pos, 'sell')
+                    trader.market_order(currency, total_pos, 'sell')
                 elif total_pos < 0:
-                    market_order(currency, abs(total_pos), 'buy')
+                    trader.market_order(currency, abs(total_pos), 'buy')
                 print(f'All positions closed for {currency}')
             elif signal == 'close_buy':
                 total_pos = (open_pos_cur.type * open_pos_cur.volume).sum()
-                market_order(currency, abs(total_pos) + POSITION_SIZE, 'buy')
+                trader.market_order(currency, abs(total_pos) + POSITION_SIZE, 'buy')
                 print(f'Existing short position closed for {currency}')
                 print(f'New long position initiated for {currency}')
             elif signal == 'close_sell':
                 total_pos = (open_pos_cur.type * open_pos_cur.volume).sum()
-                market_order(currency, total_pos + POSITION_SIZE, 'sell')
+                trader.market_order(currency, total_pos + POSITION_SIZE, 'sell')
                 print(f'Existing long position closed for {currency}')
                 print(f'New short position initiated for {currency}')
 

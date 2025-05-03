@@ -5,12 +5,13 @@ import pandas as pd
 from strategies.qlearning_basic import BaseQLearningTrader
 from utils.data_loaders import get_positions,get_5m_candles
 from utils.constants import CURRENCY_COLUMN_NAME, CURRENCY_PAIRS, TradeAction
+from utils.traders.base_trader import BaseTrader
 
 MAX_TRADES_PER_ALGORITHM_ITERATION = 5
 
 class QLearningTrader(BaseQLearningTrader):
-    def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
-        super().__init__(alpha, gamma, epsilon, num_states)
+    def __init__(self, trader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
+        super().__init__(trader, alpha, gamma, epsilon, num_states)
 
     def fill_q_table(self, prices):
         # Find min and max prices for normalization
@@ -46,9 +47,9 @@ class QLearningTrader(BaseQLearningTrader):
 def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:
     return all_positions.loc[all_positions[CURRENCY_COLUMN_NAME] == currency]
 
-def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -> None:
+def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame, trader: BaseTrader) -> None:
     # We want to create new agent for each currency, so training on data related to one currency won't impact buy/sell decisions for another
-    agent = QLearningTrader()
+    agent = QLearningTrader(trader)
             
     agent.train(data_for_currency)
         
@@ -58,7 +59,7 @@ def run_algorithm_for_currency(currency: str, data_for_currency: pd.DataFrame) -
             
     agent.perform_trading(data_for_currency, currency)
 
-def qlearning():    
+def qlearning(trader):    
     try:                    
         open_pos = get_positions()
         print(f"open_pos head: {open_pos.head()}")
@@ -68,7 +69,7 @@ def qlearning():
             
             data_for_currency = get_5m_candles(currency)
             print(f"data for currency ({currency})={data_for_currency.head()}")
-            run_algorithm_for_currency(currency, data_for_currency)
+            run_algorithm_for_currency(currency, data_for_currency, trader)
             
             
     except Exception as e:

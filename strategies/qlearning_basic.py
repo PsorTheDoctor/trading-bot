@@ -5,8 +5,8 @@ import random
 import pandas as pd
 from abc import ABC, abstractmethod
 
-from utils.orders import market_order
 from utils.constants import POSITION_SIZE, TradeAction
+from utils.traders.base_trader import BaseTrader
 
 MAX_TRADES_PER_ALGORITHM_ITERATION = 5
 
@@ -15,7 +15,8 @@ Q_TABLE_FILE_NAME = 'qlearning-qtable-content.npy'
 Q_TABLE_FILE_FULL_PATH = path.join(Q_TABLE_FILE_DIRECTORY_PATH, Q_TABLE_FILE_NAME)
 
 class BaseQLearningTrader(ABC):
-    def __init__(self, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):        
+    def __init__(self, trader: BaseTrader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
+        self.trader = trader
         self.alpha = alpha  # learning rate
         self.gamma = gamma  # discount factor
         self.epsilon = epsilon  # exploration rate
@@ -120,5 +121,5 @@ class BaseQLearningTrader(ABC):
             print(f"action: {action}")
             
             if action == TradeAction.BUY or action == TradeAction.SELL:
-                order_status = market_order(currency, POSITION_SIZE, action.value)
+                order_status = self.trader.market_order(currency, POSITION_SIZE, action.value)
                 print(f"order status: {order_status}")
