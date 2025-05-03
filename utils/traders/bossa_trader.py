@@ -27,8 +27,12 @@ class BossaTrader(BaseTrader):
             'price': price,
             'type': direction,
             'type_time': mt5.ORDER_TIME_GTC,
-            'type_filling': mt5.ORDER_FILLING_RETURN
+            # 'type_filling': mt5.ORDER_FILLING_RETURN
+            # 'type_filling': mt5.ORDER_FILLING_IOC
+            'type_filling': mt5.ORDER_FILLING_FOK
+            # 'type_filling': 0,
         }
+        print("bossa request 1!")
         status = mt5.order_send(request)
         return status
 
@@ -50,7 +54,11 @@ class BossaTrader(BaseTrader):
             'price': price,
             'type': direction,
             'type_time': mt5.ORDER_TIME_GTC,
-            'type_filling': mt5.ORDER_FILLING_RETURN
+            # 'type_filling': mt5.ORDER_FILLING_RETURN
+            # 'type_filling': mt5.ORDER_FILLING_IOC
+            'type_filling': mt5.ORDER_FILLING_FOK
+            # 'type_filling': 0,
         }
+        print("bossa request 2!")
         status = mt5.order_send(request)
         return status

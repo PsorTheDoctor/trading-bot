@@ -180,4 +180,5 @@ cython_debug/
 # Project-specific
 
 meta_trader_key.txt
+bossa_trader_key.txt
 cache/

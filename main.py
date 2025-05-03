@@ -24,7 +24,7 @@ DEFAULT_ALGORITHM_NAME = 'renko'
 
 TRADERS: dict[str, BaseTrader] = {
     'mt5': MetaTrader5Trader(),
-    'bossa': BossaTrader(), # WIP, don't use yet
+    'bossa': BossaTrader(),
 }
 DEFAULT_TRADER_NAME = 'mt5'
 
@@ -51,7 +51,7 @@ if __name__ == '__main__':
             print('Passthrough at', time.strftime(
                 '%Y-%m-%d %H:%M:%S', time.localtime(time.time())
             ))
-            algorithm()
+            algorithm(trader)
             time.sleep(interval - ((time.time() - start) % interval))
         except KeyboardInterrupt:
             print('\nExiting')
