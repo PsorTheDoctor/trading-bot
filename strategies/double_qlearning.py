@@ -4,13 +4,14 @@ import traceback
 import random
 from typing import Literal
 
+from strategies.temporal_difference_learning import TemporalDifferenceLearning
 from utils.data_loaders import get_positions, get_5m_candles
 from utils.constants import CURRENCY_PAIRS, CURRENCY_PAIRS, POSITION_SIZE
 
 ActionType = Literal['buy', 'sell', 'hold']
 
 
-class DoubleQLearningTrader:
+class DoubleQLearningTrader(TemporalDifferenceLearning):
     def __init__(self, trader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
         self.trader = trader
         self.alpha = alpha  # learning rate
@@ -20,15 +21,6 @@ class DoubleQLearningTrader:
         self.num_states = num_states  # Number of states (can be price ranges or features)
         self.q1_table = np.zeros((num_states, len(self.actions)))  # Q1-table initialization
         self.q2_table = np.zeros((num_states, len(self.actions)))  # Q2-table initialization
-
-    def get_state_index(self, state, min_price, max_price):
-        # Normalize price to get a state index (for simplicity, using price-to-index mapping)
-        normalized_state = (state - min_price) / (max_price - min_price)  # Normalize the price
-        # Map to state index range [0, num_states - 1]
-        return int(normalized_state * (self.num_states - 1))  # Ensure index is within bounds
-
-    def get_action_index(self, action):
-        return self.actions.index(action)
 
     def choose_action(self, state, min_price, max_price) -> ActionType:
         # Epsilon-greedy strategy for action selection
@@ -57,25 +49,6 @@ class DoubleQLearningTrader:
             self.q2_table[state_idx, action_idx] = (1 - self.alpha) * self.q2_table[state_idx, action_idx] + \
                                                    self.alpha * (reward + self.gamma * target_q)
 
-    def calculate_reward(self, current_price: float, action: ActionType, future_price: float) -> float:
-        # Define the reward function for Forex trading
-        if action == 'buy':
-            reward = future_price - current_price  # Price change after buying
-        elif action == 'sell':
-            reward = current_price - future_price  # Price change after selling
-        else:  # Hold
-            reward = 0  # No reward for holding
-        return reward
-
-    def extract_prices_from_data(self, data: pd.DataFrame) -> list[float]:
-        return data['close'].values
-
-    def get_min_and_max_price_from_data(self, data: np.ndarray) -> tuple[float, float]:
-        min_price = np.min(data)
-        max_price = np.max(data)
-
-        return (min_price, max_price)
-
     def train(self, data: pd.DataFrame) -> None:
         prices = self.extract_prices_from_data(data)
 
@@ -99,22 +72,6 @@ class DoubleQLearningTrader:
 
             # Update Q-tables
             self.update_q_table(current_price, action, reward, next_price, min_price, max_price)
-
-    def test(self, data: pd.DataFrame) -> float:
-        prices = self.extract_prices_from_data(data)
-
-        # Find min and max prices for normalization
-        min_price, max_price = self.get_min_and_max_price_from_data(prices)
-
-        # Test the trained model with new data
-        total_profit = 0
-        for i in range(1, len(prices)):
-            current_price = prices[i - 1]
-            action = self.choose_action(current_price, min_price, max_price)
-            future_price = prices[i]
-            reward = self.calculate_reward(current_price, action, future_price)
-            total_profit += reward
-        return total_profit
 
     def perform_trading(self, data: pd.DataFrame, currency: str):
         prices = self.extract_prices_from_data(data)

@@ -14,7 +14,8 @@ Q_TABLE_FILE_DIRECTORY_PATH = path.join(Path(__file__ ).parent.parent, 'cache')
 Q_TABLE_FILE_NAME = 'qlearning-qtable-content.npy'
 Q_TABLE_FILE_FULL_PATH = path.join(Q_TABLE_FILE_DIRECTORY_PATH, Q_TABLE_FILE_NAME)
 
-class BaseQLearningTrader(ABC):
+
+class TemporalDifferenceLearning(ABC):
     def __init__(self, trader: BaseTrader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
         self.trader = trader
         self.alpha = alpha  # learning rate
@@ -98,7 +99,7 @@ class BaseQLearningTrader(ABC):
         # Test the trained model with new data
         total_profit = 0
         for i in range(1, len(prices)):
-            current_price = prices[i-1]
+            current_price = prices[i - 1]
             action = self.choose_action(current_price, min_price, max_price)
             future_price = prices[i]
             reward = self.calculate_reward(current_price, action, future_price)
@@ -114,9 +115,8 @@ class BaseQLearningTrader(ABC):
         # Test the trained model with new data
         max_actions_per_algorithm_iteration = min(MAX_TRADES_PER_ALGORITHM_ITERATION, len(prices))
         for i in range(1, max_actions_per_algorithm_iteration):
-            current_price = prices[i-1]
+            current_price = prices[i - 1]
             action = self.choose_action(current_price, min_price, max_price)
-            future_price = prices[i]
             
             print(f"action: {action}")
             

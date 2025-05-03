@@ -2,14 +2,15 @@ import traceback
 import numpy as np
 import pandas as pd
 
-from strategies.qlearning_basic import BaseQLearningTrader
+from strategies.temporal_difference_learning import TemporalDifferenceLearning
 from utils.data_loaders import get_positions,get_5m_candles
 from utils.constants import CURRENCY_COLUMN_NAME, CURRENCY_PAIRS, TradeAction
 from utils.traders.base_trader import BaseTrader
 
 MAX_TRADES_PER_ALGORITHM_ITERATION = 5
 
-class QLearningTrader(BaseQLearningTrader):
+
+class QLearningTrader(TemporalDifferenceLearning):
     def __init__(self, trader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100):
         super().__init__(trader, alpha, gamma, epsilon, num_states)
 
@@ -41,7 +42,7 @@ class QLearningTrader(BaseQLearningTrader):
         best_future_q = np.max(self.q_table[next_state_idx])  # Best Q-value for next state
         self.q_table[state_idx, action_idx] = (1 - self.alpha) * self.q_table[state_idx, action_idx] + \
                                                 self.alpha * (reward + self.gamma * best_future_q)
-                                                
+
         # print(f"q-table={self.q_table}")
 
 def get_positions_for_currency(all_positions: pd.DataFrame, currency: str) -> pd.DataFrame:

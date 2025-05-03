@@ -6,7 +6,7 @@ from keras.api.optimizers import Adam
 
 import pandas as pd
 
-from strategies.qlearning_basic import BaseQLearningTrader
+from strategies.temporal_difference_learning import BaseQLearningTrader
 from utils.constants import CURRENCY_PAIRS, POSITION_SIZE, TradeAction
 from utils.data_loaders import get_5m_candles, get_positions
 from utils.traders.base_trader import BaseTrader
