@@ -82,12 +82,19 @@ def pflio(DF, m, x):
     for i in range(len(df)):
         if len(portfolio) > 0:
             monthly_ret.append(df[portfolio].iloc[i, :].mean())
+            
+            # Those stocks in our current portfolio are not performing well, therefore we want to SELL them
             bad_stocks = df[portfolio].iloc[i, :].sort_values(
                 ascending=True)[:x].index.values.tolist()
+            
             portfolio = [t for t in portfolio if t not in bad_stocks]
         fill = m - len(portfolio)
+        
+        # Those stocks from the market are performing well, so we want to BUY them
         new_picks = df.iloc[i, :].sort_values(
             ascending=False)[:fill].index.values.tolist()
+        
+        
         portfolio = portfolio + new_picks
         print(portfolio)
     monthly_ret_df = pd.DataFrame(np.array(monthly_ret), columns=["mon_ret"])
