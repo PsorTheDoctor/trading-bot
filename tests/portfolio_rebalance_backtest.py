@@ -5,37 +5,39 @@ import datetime as dt
 import copy
 import matplotlib.pyplot as plt
 
+from utils.performance_indicators import cagr, volatility, sharpe, max_drawdown
 
-def CAGR(DF):
-    "function to calculate the Cumulative Annual Growth Rate of a trading strategy"
-    df = DF.copy()
-    df["cum_return"] = (1 + df["mon_ret"]).cumprod()
-    n = len(df)/12
-    CAGR = (df["cum_return"].tolist()[-1])**(1/n) - 1
-    return CAGR
 
-def volatility(DF):
-    "function to calculate annualized volatility of a trading strategy"
-    df = DF.copy()
-    vol = df["mon_ret"].std() * np.sqrt(12)
-    return vol
+# def CAGR(DF):
+#     "function to calculate the Cumulative Annual Growth Rate of a trading strategy"
+#     df = DF.copy()
+#     df["cum_return"] = (1 + df["mon_ret"]).cumprod()
+#     n = len(df)/12
+#     CAGR = (df["cum_return"].tolist()[-1])**(1/n) - 1
+#     return CAGR
 
-def sharpe(DF,rf):
-    "function to calculate sharpe ratio ; rf is the risk free rate"
-    df = DF.copy()
-    sr = (CAGR(df) - rf)/volatility(df)
-    return sr
+# def volatility(DF):
+#     "function to calculate annualized volatility of a trading strategy"
+#     df = DF.copy()
+#     vol = df["mon_ret"].std() * np.sqrt(12)
+#     return vol
+
+# def sharpe(DF,rf):
+#     "function to calculate sharpe ratio ; rf is the risk free rate"
+#     df = DF.copy()
+#     sr = (CAGR(df) - rf)/volatility(df)
+#     return sr
     
 
-def max_dd(DF):
-    "function to calculate max drawdown"
-    df = DF.copy()
-    df["cum_return"] = (1 + df["mon_ret"]).cumprod()
-    df["cum_roll_max"] = df["cum_return"].cummax()
-    df["drawdown"] = df["cum_roll_max"] - df["cum_return"]
-    df["drawdown_pct"] = df["drawdown"]/df["cum_roll_max"]
-    max_dd = df["drawdown_pct"].max()
-    return max_dd
+# def max_dd(DF):
+#     "function to calculate max drawdown"
+#     df = DF.copy()
+#     df["cum_return"] = (1 + df["mon_ret"]).cumprod()
+#     df["cum_roll_max"] = df["cum_return"].cummax()
+#     df["drawdown"] = df["cum_roll_max"] - df["cum_return"]
+#     df["drawdown_pct"] = df["drawdown"]/df["cum_roll_max"]
+#     max_dd = df["drawdown_pct"].max()
+#     return max_dd
 
 # Download historical data (monthly) for DJI constituent stocks
 
@@ -89,16 +91,16 @@ def pflio(DF,m,x):
 
 
 #calculating overall strategy's KPIs
-CAGR(pflio(return_df,6,3))
+cagr(pflio(return_df,6,3))
 sharpe(pflio(return_df,6,3),0.025)
-max_dd(pflio(return_df,6,3)) 
+max_drawdown(pflio(return_df,6,3)) 
 
 #calculating KPIs for Index buy and hold strategy over the same period
 DJI = yf.download("^DJI",dt.date.today()-dt.timedelta(3650),dt.date.today(),interval='1mo')
 DJI["mon_ret"] = DJI["Adj Close"].pct_change().fillna(0)
-CAGR(DJI)
+cagr(DJI)
 sharpe(DJI,0.025)
-max_dd(DJI)
+max_drawdown(DJI)
 
 #visualization
 fig, ax = plt.subplots()
