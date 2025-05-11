@@ -2,10 +2,29 @@ import traceback
 import MetaTrader5 as mt5
 import pandas as pd
 import datetime as dt
+
 from utils.data_loaders import *
 from utils.technical_indicators import *
 from utils.constants import CURRENCY_PAIRS, POSITION_SIZE
 from utils.traders.base_trader import BaseTrader
+
+
+def merge_renko_with_macd(df):
+    df = copy.deepcopy(df)
+    df['date'] = df.index
+    renko_df = renko(df)
+    renko_df.columns = ['date', 'open', 'high', 'low', 'close', 'uptrend', 'bar_num']
+
+    renko_df_to_merge = renko_df.loc[:, ['date', 'bar_num']]
+    df.date.astype('datetime64[ns]', copy=False)
+    renko_df_to_merge.date = renko_df_to_merge.date.astype('datetime64[ns]')
+
+    merged_df = df.merge(renko_df_to_merge, how='outer', on='date')
+    merged_df['bar_num'].fillna(method='ffill', inplace=True)
+    merged_df['macd'] = macd(merged_df, 12, 26, 9)[0]
+    merged_df['macd_sig'] = macd(merged_df, 12, 26, 9)[1]
+    return merged_df
+
 
 def trade_signal(merged_df, long_short):
     signal = ''
@@ -32,7 +51,7 @@ def trade_signal(merged_df, long_short):
     return signal
 
 
-def macd_renko(trader: BaseTrader):
+def renko_macd(trader: BaseTrader):
     try:
         open_pos = get_positions()
         for currency in CURRENCY_PAIRS:
@@ -46,7 +65,7 @@ def macd_renko(trader: BaseTrader):
                         long_short = 'short'
 
             ohlc = get_5m_candles(currency)
-            signal = trade_signal(renko_merge(ohlc), long_short)
+            signal = trade_signal(merge_renko_with_macd(ohlc), long_short)
 
             if signal == 'buy' or signal == 'sell':
                 trader.market_order(currency, POSITION_SIZE, signal)

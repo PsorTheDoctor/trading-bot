@@ -69,23 +69,6 @@ def renko(df):
     return renko_df
 
 
-def renko_merge(df):
-    df = copy.deepcopy(df)
-    df['date'] = df.index
-    renko_df = renko(df)
-    renko_df.columns = ['date', 'open', 'high', 'low', 'close', 'uptrend', 'bar_num']
-    
-    renko_df_to_merge = renko_df.loc[:, ['date', 'bar_num']]
-    df.date.astype('datetime64[ns]', copy=False)
-    renko_df_to_merge.date = renko_df_to_merge.date.astype('datetime64[ns]')
-    
-    merged_df = df.merge(renko_df_to_merge, how='outer', on='date')
-    merged_df['bar_num'].fillna(method='ffill', inplace=True)
-    merged_df['macd'] = macd(merged_df, 12, 26, 9)[0]
-    merged_df['macd_sig'] = macd(merged_df, 12, 26, 9)[1]
-    return merged_df
-
-
 def obv(df):
     """
     On Balance Volume

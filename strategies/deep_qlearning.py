@@ -3,10 +3,9 @@ import numpy as np
 from keras.api.models import Sequential
 from keras.api.layers import Dense
 from keras.api.optimizers import Adam
-
 import pandas as pd
 
-from strategies.temporal_difference_learning import BaseQLearningTrader
+from strategies.temporal_difference_learning import TemporalDifferenceLearning
 from utils.constants import CURRENCY_PAIRS, POSITION_SIZE, TradeAction
 from utils.data_loaders import get_5m_candles, get_positions
 from utils.traders.base_trader import BaseTrader
@@ -26,7 +25,7 @@ ACTION_TO_TRADE_ACTION_MAPPINGS = {
 # ---------------------------
 # Environment for Forex Trading
 # ---------------------------
-class DeepQLearningTrader(BaseQLearningTrader):
+class DeepQLearningTrader(TemporalDifferenceLearning):
     def __init__(self, trader, alpha=0.1, gamma=0.99, epsilon=0.1, num_states=100, state_size=1, action_size=len(ACTION_TO_TRADE_ACTION_MAPPINGS.keys())):
         super().__init__(trader, alpha, gamma, epsilon, num_states)
         self.state_size = state_size

@@ -2,25 +2,28 @@ import MetaTrader5 as mt5
 import time
 import sys
 
-from strategies.macd_renko import macd_renko
+from strategies.renko_macd import renko_macd
+from strategies.renko_obv import renko_obv
 from strategies.qlearning import qlearning
 from strategies.deep_qlearning import deep_qlearning
 from strategies.sarsa import sarsa
 from strategies.double_qlearning import double_qlearning
 from strategies.expected_sarsa import expected_sarsa
+
 from utils.traders.base_trader import BaseTrader
 from utils.traders.bossa_trader import BossaTrader
 from utils.traders.metatrader5_trader import MetaTrader5Trader
 
 ALGORITHMS = {
-    'renko': macd_renko,
+    'renko_macd': renko_macd,
+    'renko_obv': renko_obv,
     'qlearning': qlearning,
-    'deep-qlearning': deep_qlearning,
+    'deep_qlearning': deep_qlearning,
     'sarsa': sarsa,
     'double_qlearning': double_qlearning,
     'expected_sarsa': expected_sarsa
 }
-DEFAULT_ALGORITHM_NAME = 'renko'
+DEFAULT_ALGORITHM_NAME = 'renko_macd'
 
 TRADERS: dict[str, BaseTrader] = {
     'mt5': MetaTrader5Trader(),
