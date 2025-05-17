@@ -1,6 +1,6 @@
-import MetaTrader5 as mt5
+from collections.abc import Callable
 import time
-import sys
+import argparse
 
 from strategies.renko_macd import renko_macd
 from strategies.renko_obv import renko_obv
@@ -14,7 +14,7 @@ from utils.traders.base_trader import BaseTrader
 from utils.traders.bossa_trader import BossaTrader
 from utils.traders.metatrader5_trader import MetaTrader5Trader
 
-ALGORITHMS = {
+ALGORITHMS: dict[str, Callable[[BaseTrader], None]] = {
     'renko_macd': renko_macd,
     'renko_obv': renko_obv,
     'qlearning': qlearning,
@@ -31,17 +31,41 @@ TRADERS: dict[str, BaseTrader] = {
 }
 DEFAULT_TRADER_NAME = 'mt5'
 
+CLI_STRATEGY_PARAM_NAME = 'strategy'
+CLI_TRADER_PARAM_NAME = 'trader'
 
-if __name__ == '__main__':
-    algorithm_name = sys.argv[1] if len(sys.argv) >= 2 else DEFAULT_ALGORITHM_NAME
-    algorithm = ALGORITHMS.get(algorithm_name)
-    if not algorithm:
-        raise Exception(f"Unsupported algorithm: {algorithm_name}")
+def read_cli_arguments():
+    parser = argparse.ArgumentParser()
     
-    trader_name = sys.argv[2] if len(sys.argv) >= 3 else DEFAULT_TRADER_NAME
+    parser.add_argument(f"--{CLI_STRATEGY_PARAM_NAME}", default=DEFAULT_ALGORITHM_NAME, help='Which trading strategy should be used (MACD renko is default)')
+    parser.add_argument(f"--{CLI_TRADER_PARAM_NAME}", default=DEFAULT_TRADER_NAME, help='Which FOREX trader should be used (MetaTrader 5 is default)')
+    
+    args = parser.parse_args()
+    
+    return vars(args)
+
+def get_trading_strategy(strategy_name: str):
+    strategy = ALGORITHMS.get(strategy_name)
+    
+    if not strategy:
+        raise Exception(f"Unsupported algorithm: {strategy_name}")
+    
+    return strategy
+
+def get_trader(trader_name: str):
     trader = TRADERS.get(trader_name)
+    
     if not trader:
         raise Exception(f"Unsupported trader platform: {trader_name}")
+    
+    return trader
+
+
+if __name__ == '__main__':
+    input_arguments = read_cli_arguments()
+    
+    algorithm = get_trading_strategy(input_arguments[CLI_STRATEGY_PARAM_NAME])
+    trader = get_trader(input_arguments[CLI_TRADER_PARAM_NAME])
     
     interval = 60  # 1-minute interval in seconds
 

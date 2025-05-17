@@ -12,7 +12,12 @@ class BossaTrader(BaseTrader):
         if mt5.initialize(path=terminal_path, login=int(key[0]), password=key[1], server=key[2]):
             print('Connected')
     
-    def market_order(self, symbol, vol, buy_sell):
+    def open_or_close_trade(self, symbol, vol, buy_sell, position_id=None):
+        if position_id:
+            status = mt5.Close(symbol ,ticket=position_id)
+            print(f"bossa close order status: {status}")
+            return status
+        
         if buy_sell.lower()[0] == 'b':
             direction = mt5.ORDER_TYPE_BUY
             price = mt5.symbol_info_tick(symbol).ask
@@ -23,18 +28,30 @@ class BossaTrader(BaseTrader):
         request = {
             'action': mt5.TRADE_ACTION_DEAL,
             'symbol': symbol,
+            # 'position': position_id,
             'volume': vol,
             'price': price,
             'type': direction,
             'type_time': mt5.ORDER_TIME_GTC,
-            # 'type_filling': mt5.ORDER_FILLING_RETURN
-            # 'type_filling': mt5.ORDER_FILLING_IOC
             'type_filling': mt5.ORDER_FILLING_FOK
-            # 'type_filling': 0,
         }
-        print("bossa request 1!")
+        # if position_id:
+        #     request['position'] = position_id
+        
         status = mt5.order_send(request)
+        print(f"bossa buy/sell order status: {status}")
         return status
+        
+    def market_order(self, symbol, vol, buy_sell):
+        open_trade_result = self.open_or_close_trade(symbol, vol, buy_sell)
+        position_id = open_trade_result.order
+        
+        if not position_id:
+            return open_trade_result
+        
+        close_trade_result = self.open_or_close_trade(symbol, vol, buy_sell, position_id)
+        
+        return close_trade_result
 
 
     def limit_order(self, symbol, vol, buy_sell, pips_away):
@@ -54,10 +71,7 @@ class BossaTrader(BaseTrader):
             'price': price,
             'type': direction,
             'type_time': mt5.ORDER_TIME_GTC,
-            # 'type_filling': mt5.ORDER_FILLING_RETURN
-            # 'type_filling': mt5.ORDER_FILLING_IOC
             'type_filling': mt5.ORDER_FILLING_FOK
-            # 'type_filling': 0,
         }
         print("bossa request 2!")
         status = mt5.order_send(request)
