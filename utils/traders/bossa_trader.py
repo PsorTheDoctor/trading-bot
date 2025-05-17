@@ -13,6 +13,11 @@ class BossaTrader(BaseTrader):
             print('Connected')
     
     def open_or_close_trade(self, symbol, vol, buy_sell, position_id=None):
+        if position_id:
+            status = mt5.Close(symbol ,ticket=position_id)
+            print(f"bossa close order status: {status}")
+            return status
+        
         if buy_sell.lower()[0] == 'b':
             direction = mt5.ORDER_TYPE_BUY
             price = mt5.symbol_info_tick(symbol).ask
@@ -23,14 +28,18 @@ class BossaTrader(BaseTrader):
         request = {
             'action': mt5.TRADE_ACTION_DEAL,
             'symbol': symbol,
-            'position': position_id,
+            # 'position': position_id,
             'volume': vol,
             'price': price,
             'type': direction,
             'type_time': mt5.ORDER_TIME_GTC,
             'type_filling': mt5.ORDER_FILLING_FOK
         }
+        # if position_id:
+        #     request['position'] = position_id
+        
         status = mt5.order_send(request)
+        print(f"bossa buy/sell order status: {status}")
         return status
         
     def market_order(self, symbol, vol, buy_sell):
