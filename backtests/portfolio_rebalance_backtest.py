@@ -63,10 +63,17 @@ tickers = ohlc_mon.keys()
 def run_portfolio_rebalance_backtesting():
     # calculating monthly return for each stock and consolidating return info by stock in a separate dataframe
     ohlc_dict = copy.deepcopy(ohlc_mon)
+    print(f"ohl_dict: {ohlc_dict}")
+    
+    available_tickers = [ticker for ticker in tickers if ticker in ohlc_dict]
+    
     return_df = pd.DataFrame()
-    for ticker in tickers:
+    for ticker in available_tickers:
         print("calculating monthly return for ", ticker)
-        ohlc_dict[ticker]["mon_ret"] = ohlc_dict[ticker]["Adj Close"].pct_change()
+        print("value for ticket: ", ohlc_dict[ticker])
+        
+        # ohlc_dict[ticker]["mon_ret"] = ohlc_dict[ticker]["Adj Close"].pct_change()
+        ohlc_dict[ticker]["mon_ret"] = ohlc_dict[ticker]["Close"].pct_change()
         return_df[ticker] = ohlc_dict[ticker]["mon_ret"]
     return_df.dropna(inplace=True)
 
