@@ -73,8 +73,8 @@ def run_portfolio_rebalance_backtesting():
         print("value for ticket: ", ohlc_dict[ticker])
         
         # ohlc_dict[ticker]["mon_ret"] = ohlc_dict[ticker]["Adj Close"].pct_change()
-        ohlc_dict[ticker]["mon_ret"] = ohlc_dict[ticker]["Close"].pct_change()
-        return_df[ticker] = ohlc_dict[ticker]["mon_ret"]
+        ohlc_dict[ticker]["ret"] = ohlc_dict[ticker]["Close"].pct_change()
+        return_df[ticker] = ohlc_dict[ticker]["ret"]
     return_df.dropna(inplace=True)
 
 
@@ -105,7 +105,7 @@ def run_portfolio_rebalance_backtesting():
             
             portfolio = portfolio + new_picks
             print(portfolio)
-        monthly_ret_df = pd.DataFrame(np.array(monthly_ret), columns=["mon_ret"])
+        monthly_ret_df = pd.DataFrame(np.array(monthly_ret), columns=["ret"])
         return monthly_ret_df
 
 
@@ -117,7 +117,7 @@ def run_portfolio_rebalance_backtesting():
     # calculating KPIs for Index buy and hold strategy over the same period
     DJI = yf.download("^DJI", dt.date.today()-dt.timedelta(3650),
                     dt.date.today(), interval='1mo')
-    DJI["mon_ret"] = DJI["Adj Close"].pct_change().fillna(0)
+    DJI["ret"] = DJI["Close"].pct_change().fillna(0)
     cagr(DJI, INDICATOR_PARAMETER)
     sharpe(DJI, 0.025, INDICATOR_PARAMETER)
     max_drawdown(DJI)
@@ -125,8 +125,10 @@ def run_portfolio_rebalance_backtesting():
     # visualization
     fig, ax = plt.subplots()
     plt.plot((1+pflio(return_df, 6, 3)).cumprod())
-    plt.plot((1+DJI["mon_ret"].reset_index(drop=True)).cumprod())
+    plt.plot((1+DJI["ret"].reset_index(drop=True)).cumprod())
     plt.title("Index Return vs Strategy Return")
     plt.ylabel("cumulative return")
     plt.xlabel("months")
     ax.legend(["Strategy Return", "Index Return"])
+    
+    plt.show()

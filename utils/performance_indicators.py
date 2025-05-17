@@ -29,6 +29,6 @@ def max_drawdown(df):
     df['cum_return'] = (1 + df['ret']).cumprod()
     df['cum_roll_max'] = df['cum_return'].cummax()
     df['drawdown'] = df['cum_roll_max'] - df['cum_return']
-    df['drawdown_pct'] = df['drwadown'] / df['cum_roll_max']
+    df['drawdown_pct'] = df['drawdown'] / df['cum_roll_max']
     max_drawdown = df['drawdown_pct'].max()
     return max_drawdown
