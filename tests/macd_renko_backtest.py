@@ -9,6 +9,7 @@ tickers = ['MSFT', 'AAPL', 'AMZN']
 ohlc = {}  # dict with ohlc value for each stock
 key = open(r'D:\alpha_vantage_key.txt', 'r').read()
 ts = TimeSeries(key=key, output_format='pandas')
+INDICATOR_PARAMETER = 252 * 78
 
 
 def fetch_data(tickers, provider):
@@ -120,8 +121,8 @@ sharpe_dict = {}
 max_drawdown_dict = {}
 for ticker in tickers:
     print(f'Calculating KPIs for {ticker}')
-    cagr_dict[ticker] = cagr(ohlc_renko[ticker])
-    sharpe_dict[ticker] = sharpe(ohlc_renko[ticker], 0.025)
+    cagr_dict[ticker] = cagr(ohlc_renko[ticker], INDICATOR_PARAMETER)
+    sharpe_dict[ticker] = sharpe(ohlc_renko[ticker], 0.025, INDICATOR_PARAMETER)
     max_drawdown_dict[ticker] = max_drawdown(ohlc_renko[ticker])
 
 kpi_df = pd.DataFrame([cagr_dict, sharpe_dict, max_drawdown_dict],
