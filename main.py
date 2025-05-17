@@ -2,6 +2,7 @@ import MetaTrader5 as mt5
 import time
 import sys
 
+from strategies.resistance_breakout import resistance_breakout
 from strategies.renko_macd import renko_macd
 from strategies.renko_obv import renko_obv
 from strategies.qlearning import qlearning
@@ -15,6 +16,7 @@ from utils.traders.bossa_trader import BossaTrader
 from utils.traders.metatrader5_trader import MetaTrader5Trader
 
 ALGORITHMS = {
+    'resistance_breakout': resistance_breakout,
     'renko_macd': renko_macd,
     'renko_obv': renko_obv,
     'qlearning': qlearning,

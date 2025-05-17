@@ -4,52 +4,44 @@ import datetime as dt
 import traceback
 
 from utils.data_loaders import *
-from utils.technical_indicators import *
+from utils.technical_indicators import atr
 from utils.constants import CURRENCY_PAIRS
 from utils.traders.base_trader import BaseTrader
 
 
-def merge_renko_with_obv(df):
+def merge_atr_with_roll(df):
     df = copy.deepcopy(df)
-    df['date'] = df.index
-    renko_df = renko(df)
-    renko_df.columns = ['date', 'open', 'high', 'low', 'close', 'uptrend', 'bar_num']
-
-    renko_df_to_merge = renko_df.loc[:, ['date', 'bar_num']]
-    df.date.astype('datetime64[ns]', copy=False)
-    renko_df_to_merge.date = renko_df_to_merge.date.astype('datetime64[ns]')
-
-    merged_df = df.merge(renko_df_to_merge, how='outer', on='date')
-    merged_df['bar_num'].fillna(method='ffill', inplace=True)
-    merged_df['obv'] = obv(merged_df)
-    merged_df['obv_slope'] = slope(merged_df, 5)
-    return merged_df
+    df['atr'] = atr(df, 20)
+    df['roll_max_cp'] = df['high'].rolling(20).max()
+    df['roll_min_cp'] = df['low'].rolling(20).min()
+    df['roll_max_vol'] = df['volume'].rolling(20).max()
+    df.dropna(inplace=True)
+    return df
 
 
-def trade_signal(merged_df, long_short):
+def trade_signal(df, long_short):
     signal = ''
-    df = copy.deepcopy(merged_df)
 
     if long_short == '':
-        if df['bar_num'].tolist()[-1] >= 2 and df['obv_slope'].tolist()[-1] > 30:
+        if df['high'].tolist()[-1] >= df['roll_max_cp'].tolist()[-1] and df['volume'].tolist()[-1] > 1.5 * df['roll_max_vol'].tolist()[-2]:
             signal = 'buy'
-        elif df['bar_num'].tolist()[-1] <= -2 and df['obv_slope'].tolist()[-1] < -30:
+        elif df['low'].tolist()[-1] <= df['roll_min_cp'].tolist()[-1] and df['volume'].tolist()[-1] > 1.5 * df['roll_max_vol'].tolist()[-2]:
             signal = 'sell'
     elif long_short == 'long':
-        if df['bar_num'].tolist()[-1] <= -2 and df['obv_slope'].tolist()[-1] < -30:
+        if df['low'].tolist()[-1] < df['close'].tolist()[-2] - df['atr'].tolist()[-2]:
+            signal = 'close'
+        elif df['low'].tolist()[-1] <= df['roll_min_cp'].tolist()[-1] and df['volume'].tolist()[-1] > 1.5 * df['roll_max_vol'].tolist()[-2]:
             signal = 'close_sell'
-        elif df['bar_num'].tolist()[-1] < 2:
-            signal = 'close'
     elif long_short == 'short':
-        if df['bar_num'].tolist()[-1] >= 2 and df['obv_slope'].tolist()[-1] > 30:
-            signal = 'close_buy'
-        elif df['bar_num'].tolist()[-1] > -2:
+        if df['high'].tolist()[-1] > df['close'].tolist()[-2] + df['atr'].tolist()[-2]:
             signal = 'close'
+        elif df['high'].tolist()[-1] >= df['roll_max_cp'].tolist()[-1] and df['volume'].tolist()[-1] > 1.5 * df['roll_max_vol'].tolist()[-2]:
+            signal = 'close_buy'
 
     return signal
 
 
-def renko_obv(trader: BaseTrader):
+def resistance_breakout(trader: BaseTrader):
     try:
         open_pos = get_positions()
         for currency in CURRENCY_PAIRS:
@@ -63,7 +55,7 @@ def renko_obv(trader: BaseTrader):
                         long_short = 'short'
 
             ohlc = get_5m_candles(currency)
-            signal = trade_signal(merge_renko_with_macd(ohlc), long_short)
+            signal = trade_signal(merge_atr_with_roll(ohlc), long_short)
 
             if signal == 'buy' or signal == 'sell':
                 trader.market_order(currency, POSITION_SIZE, signal)
