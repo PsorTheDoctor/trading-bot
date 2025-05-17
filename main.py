@@ -3,6 +3,7 @@ import time
 import argparse
 
 from strategies.resistance_breakout import resistance_breakout
+from backtests.portfolio_rebalance_backtest import run_portfolio_rebalance_backtesting
 from strategies.renko_macd import renko_macd
 from strategies.renko_obv import renko_obv
 from strategies.qlearning import qlearning
@@ -11,6 +12,7 @@ from strategies.sarsa import sarsa
 from strategies.double_qlearning import double_qlearning
 from strategies.expected_sarsa import expected_sarsa
 
+from backtests.macd_renko_backtest import run_macd_renko_backtesting
 from utils.traders.base_trader import BaseTrader
 from utils.traders.bossa_trader import BossaTrader
 from utils.traders.metatrader5_trader import MetaTrader5Trader
@@ -33,14 +35,21 @@ TRADERS: dict[str, BaseTrader] = {
 }
 DEFAULT_TRADER_NAME = 'mt5'
 
+BACKTESTS = {
+    'macd_renko': run_macd_renko_backtesting,
+    'portfolio_rebalancing': run_portfolio_rebalance_backtesting,
+}
+
 CLI_STRATEGY_PARAM_NAME = 'strategy'
 CLI_TRADER_PARAM_NAME = 'trader'
+CLI_BACKTESTING_PARAM_NAME = 'backtesting'
 
 def read_cli_arguments():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(f"--{CLI_STRATEGY_PARAM_NAME}", default=DEFAULT_ALGORITHM_NAME, help='Which trading strategy should be used (MACD renko is default)')
     parser.add_argument(f"--{CLI_TRADER_PARAM_NAME}", default=DEFAULT_TRADER_NAME, help='Which FOREX trader should be used (MetaTrader 5 is default)')
+    parser.add_argument(f"--{CLI_BACKTESTING_PARAM_NAME}", help='Perform backtesting')
 
     args = parser.parse_args()
 
@@ -66,6 +75,15 @@ def get_trader(trader_name: str):
 if __name__ == '__main__':
     input_arguments = read_cli_arguments()
 
+    backtest_name = input_arguments[CLI_BACKTESTING_PARAM_NAME]
+    
+    if backtest_name:
+        backtest = BACKTESTS[backtest_name]
+        
+        if backtest:
+            backtest()
+            exit(0)
+    
     algorithm = get_trading_strategy(input_arguments[CLI_STRATEGY_PARAM_NAME])
     trader = get_trader(input_arguments[CLI_TRADER_PARAM_NAME])
 
