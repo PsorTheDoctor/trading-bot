@@ -7,38 +7,6 @@ import matplotlib.pyplot as plt
 
 from utils.performance_indicators import cagr, sharpe, max_drawdown
 
-
-# def CAGR(DF):
-#     "function to calculate the Cumulative Annual Growth Rate of a trading strategy"
-#     df = DF.copy()
-#     df["cum_return"] = (1 + df["mon_ret"]).cumprod()
-#     n = len(df)/12
-#     CAGR = (df["cum_return"].tolist()[-1])**(1/n) - 1
-#     return CAGR
-
-# def volatility(DF):
-#     "function to calculate annualized volatility of a trading strategy"
-#     df = DF.copy()
-#     vol = df["mon_ret"].std() * np.sqrt(12)
-#     return vol
-
-# def sharpe(DF,rf):
-#     "function to calculate sharpe ratio ; rf is the risk free rate"
-#     df = DF.copy()
-#     sr = (CAGR(df) - rf)/volatility(df)
-#     return sr
-
-
-# def max_dd(DF):
-#     "function to calculate max drawdown"
-#     df = DF.copy()
-#     df["cum_return"] = (1 + df["mon_ret"]).cumprod()
-#     df["cum_roll_max"] = df["cum_return"].cummax()
-#     df["drawdown"] = df["cum_roll_max"] - df["cum_return"]
-#     df["drawdown_pct"] = df["drawdown"]/df["cum_roll_max"]
-#     max_dd = df["drawdown_pct"].max()
-#     return max_dd
-
 # Download historical data (monthly) for DJI constituent stocks
 
 tickers = ["MMM", "AXP", "T", "BA", "CAT", "CSCO", "KO", "XOM", "GE", "GS", "HD",
@@ -72,7 +40,6 @@ def run_portfolio_rebalance_backtesting():
         print("calculating monthly return for ", ticker)
         print("value for ticket: ", ohlc_dict[ticker])
         
-        # ohlc_dict[ticker]["mon_ret"] = ohlc_dict[ticker]["Adj Close"].pct_change()
         ohlc_dict[ticker]["ret"] = ohlc_dict[ticker]["Close"].pct_change()
         return_df[ticker] = ohlc_dict[ticker]["ret"]
     return_df.dropna(inplace=True)
